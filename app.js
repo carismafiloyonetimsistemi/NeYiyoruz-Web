@@ -1,3 +1,41 @@
+
+// --- FAVORİ YEMEKLER SİSTEMİ (YILDIZLA & SEPETTE HIZLI EKLE) ---
+state.favoriteItemIds = JSON.parse(localStorage.getItem('neyiyoruz_fav_foods')) || ['lahmacun_1', 'burger_1', 'ayran_1'];
+
+window.toggleFavoriteFood = function(itemId, event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    if (!state.favoriteItemIds) state.favoriteItemIds = [];
+
+    const idx = state.favoriteItemIds.indexOf(itemId);
+    const item = FOOD_CATALOG.find(f => f.id === itemId);
+    const itemName = item ? item.name : 'Lezzet';
+
+    if (idx >= 0) {
+        state.favoriteItemIds.splice(idx, 1);
+        if (typeof window.showAppToast === 'function') {
+            window.showAppToast(`☆ "${itemName}" favorilerden çıkarıldı.`, 'info');
+        }
+    } else {
+        state.favoriteItemIds.push(itemId);
+        audio.init();
+        audio.tick();
+        if (typeof window.showAppToast === 'function') {
+            window.showAppToast(`⭐ "${itemName}" favorilere eklendi! Sepette hızlı ekle çipi olarak görünecek.`, 'success');
+        }
+    }
+
+    localStorage.setItem('neyiyoruz_fav_foods', JSON.stringify(state.favoriteItemIds));
+
+    // Ekranları güncelle
+    renderMenuScreen();
+    if (state.plates && state.plates.length > 0) {
+        renderPlatesUI();
+    }
+};
+
 // --- ETKİN SİPARİŞÇİ / ÖDEYEN BELİRLEME (VARSAYILAN: ODAYI KURAN KİŞİ) ---
 function getEffectiveRunner() {
     if (state.runner && state.runner.trim()) return state.runner.trim();
@@ -1212,12 +1250,20 @@ function renderMenuScreen() {
         } else {
             els.menuItemsGrid.innerHTML = filteredFoods.map(item => {
                 const qty = menuQuantities[item.id] || 1;
+                const isFav = Boolean(state.favoriteItemIds && state.favoriteItemIds.includes(item.id));
                 return `
                 <div class="menu-catalog-card">
                     <div class="catalog-card-left">
                         <div class="catalog-card-emoji">${item.emoji}</div>
                         <div class="catalog-card-details">
-                            <h4 class="catalog-card-title">${item.name}</h4>
+                            <div class="catalog-card-title-row">
+                                <h4 class="catalog-card-title">${item.name}</h4>
+                                <button type="button" class="btn-fav-star ${isFav ? 'active' : ''}" 
+                                        onclick="toggleFavoriteFood('${item.id}', event)" 
+                                        title="${isFav ? 'Favorilerden Çıkar' : 'Favorilere Ekle (Sepette Hızlı Ekle)'}">
+                                    <i class="${isFav ? 'fa-solid fa-star' : 'fa-regular fa-star'}"></i>
+                                </button>
+                            </div>
                             <span class="catalog-card-desc">${item.desc}</span>
                             <div class="catalog-card-price">${item.price} ₺</div>
                         </div>
@@ -2031,17 +2077,28 @@ function renderPlatesUI() {
                     }).join('')}
                 </div>
 
-                <!-- Hızlı Lezzet Ekleme Çipleri (Tek Tıkla Sepete) -->
+                <!-- Favori Lezzet Hızlı Ekleme Çipleri (Kullanıcı Yıldızladıkları) -->
                 <div class="plate-quick-chips-box">
-                    <span class="quick-chips-label"><i class="fa-solid fa-bolt text-orange"></i> Hızlı Ekle:</span>
+                    <div class="flex-between align-center mb-1">
+                        <span class="quick-chips-label"><i class="fa-solid fa-star text-amber"></i> Favori Hızlı Ekle:</span>
+                        <button type="button" class="btn-xs btn-ghost text-muted" onclick="openMenuForPerson(${index})" style="font-size:11px;" title="Menüden daha fazla lezzet yıldızla">
+                            + Menüden Yıldızla
+                        </button>
+                    </div>
                     <div class="plate-quick-chips">
-                        <button type="button" class="quick-food-chip" onclick="addQuickItemToPlate(${index}, 'Taş Fırın Lahmacun', 110, '🍕', 'food')">🍕 Lahmacun 110₺</button>
-                        <button type="button" class="quick-food-chip" onclick="addQuickItemToPlate(${index}, 'Et Döner Dürüm', 220, '🌯', 'food')">🌯 Et Döner 220₺</button>
-                        <button type="button" class="quick-food-chip" onclick="addQuickItemToPlate(${index}, 'Gurme Burger Menü', 260, '🍔', 'food')">🍔 Burger 260₺</button>
-                        <button type="button" class="quick-food-chip" onclick="addQuickItemToPlate(${index}, 'Büyük Yayık Ayran', 35, '🥤', 'drink')">🥤 Ayran 35₺</button>
-                        <button type="button" class="quick-food-chip" onclick="addQuickItemToPlate(${index}, 'Kutu Kola', 50, '🥤', 'drink')">🥤 Kola 50₺</button>
-                        <button type="button" class="quick-food-chip" onclick="addQuickItemToPlate(${index}, 'Büyük Patates', 85, '🍟', 'food')">🍟 Patates 85₺</button>
-                        <button type="button" class="quick-food-chip" onclick="addQuickItemToPlate(${index}, 'Su (500ml)', 15, '💧', 'drink')">💧 Su 15₺</button>
+                        ${(() => {
+                            const favs = (state.favoriteItemIds || []).map(fid => FOOD_CATALOG.find(f => f.id === fid)).filter(Boolean);
+                            if (favs.length === 0) {
+                                return `<span class="small-text text-muted" style="font-size:11px; padding: 2px 4px;">
+                                    ⭐ Menüde yemeklerin yanındaki yıldıza tıklayarak buraya favorilerinizi ekleyebilirsiniz.
+                                </span>`;
+                            }
+                            return favs.map(f => `
+                                <button type="button" class="quick-food-chip" onclick="addQuickItemToPlate(${index}, '${f.name.replace(/'/g, "\\'")}', ${f.price}, '${f.emoji}', '${f.type || 'food'}')" title="${f.name} ekle">
+                                    ${f.emoji} ${f.name} ${f.price}₺
+                                </button>
+                            `).join('');
+                        })()}
                     </div>
                 </div>
 
@@ -3160,4 +3217,13 @@ function broadcastRoomState() {
     } catch (e) {
         console.warn('Broadcast room state error:', e);
     }
+}
+
+const btnTopCustom = document.getElementById('btnOpenCustomDishPromptTop');
+if (btnTopCustom) {
+    btnTopCustom.addEventListener('click', () => {
+        const targetIdx = getTargetPersonIndex();
+        promptAddItemToPlate(targetIdx);
+        updateMenuStickyCartBar();
+    });
 }
