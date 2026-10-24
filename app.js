@@ -1774,11 +1774,7 @@ function renderWheelParticipants() {
                 ${isRunner ? '<span class="runner-badge-tag">👑 Siparişçi</span>' : ''}
             </span>
         `;
-    }).join('') + `
-        <button type="button" class="chip-add-btn" id="btnWheelInnerAdd">
-            <i class="fa-solid fa-user-plus"></i> + Kişi Ekle
-        </button>
-    `;
+    }).join('') ;
 
     const innerAdd = document.getElementById('btnWheelInnerAdd');
     if (innerAdd) {
@@ -2171,16 +2167,14 @@ function renderPlatesUI() {
                     </div>
                 </div>
 
-                <!-- Temiz Sipariş Aksiyon Barı -->
+                <!-- Temiz Sipariş Aksiyon Barı (Menüyü Aç & Aynısından İsterim) -->
                 <div class="plate-action-bar">
                     <button type="button" class="btn btn-sm btn-outline flex-1" onclick="openMenuForPerson(${index})" title="Geniş menü kataloğunu aç">
                         <i class="fa-solid fa-utensils"></i> 📖 Menüden Yemek Seç
                     </button>
-                    ${!isMyPlate ? `
                     <button type="button" class="btn-copy-same-plate flex-1" onclick="clonePlateForAnotherPerson(${index})" title="${copyBtnTitle}">
-                        <i class="fa-solid fa-handshake"></i> 🤝 Bana da Aynısından!
+                        <i class="fa-solid ${copyBtnIcon}"></i> ${copyBtnText}
                     </button>
-                    ` : ''}
                 </div>
 
                 <div class="plate-status-row">
