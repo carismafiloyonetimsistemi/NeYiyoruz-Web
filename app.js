@@ -1431,13 +1431,19 @@ function renderPlatesUI() {
                     }).join('')}
                 </div>
 
-                <!-- Hızlı İçecek ve İlave Ürün Ekleme Çipleri -->
+                <!-- Hızlı İçecek ve İlave Yemek / Ürün Çipleri -->
                 <div class="plate-quick-chips">
-                    <button type="button" class="quick-chip quick-chip-drink" onclick="addQuickItemToPlate(${index}, 'Ayran', 35, '🥛', 'drink')">
-                        + 🥛 Ayran (35₺)
+                    <button type="button" class="quick-chip" onclick="addQuickItemToPlate(${index}, 'Döner / Dürüm', 220, '🌯', 'food')">
+                        + 🌯 Döner (220₺)
+                    </button>
+                    <button type="button" class="quick-chip" onclick="addQuickItemToPlate(${index}, 'Lahmacun', 110, '🍕', 'food')">
+                        + 🍕 Lahmacun (110₺)
                     </button>
                     <button type="button" class="quick-chip quick-chip-drink" onclick="addQuickItemToPlate(${index}, 'Kola', 50, '🥤', 'drink')">
                         + 🥤 Kola (50₺)
+                    </button>
+                    <button type="button" class="quick-chip quick-chip-drink" onclick="addQuickItemToPlate(${index}, 'Ayran', 35, '🥛', 'drink')">
+                        + 🥛 Ayran (35₺)
                     </button>
                     <button type="button" class="quick-chip quick-chip-drink" onclick="addQuickItemToPlate(${index}, 'Şalgam Suyu', 35, '🍷', 'drink')">
                         + 🍷 Şalgam (35₺)
@@ -1449,7 +1455,7 @@ function renderPlatesUI() {
                         + 🍟 Patates (90₺)
                     </button>
                     <button type="button" class="quick-chip quick-chip-add" onclick="addNewCustomItemToPlate(${index})">
-                        <i class="fa-solid fa-plus"></i> Özel İçecek / Ürün
+                        <i class="fa-solid fa-plus"></i> Başka Bir Şey Ekle
                     </button>
                 </div>
 
