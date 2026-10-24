@@ -2171,14 +2171,16 @@ function renderPlatesUI() {
                     </div>
                 </div>
 
-                <!-- Temiz Sipariş Aksiyon Barı (Menüyü Aç & Aynısından İsterim) -->
+                <!-- Temiz Sipariş Aksiyon Barı -->
                 <div class="plate-action-bar">
                     <button type="button" class="btn btn-sm btn-outline flex-1" onclick="openMenuForPerson(${index})" title="Geniş menü kataloğunu aç">
                         <i class="fa-solid fa-utensils"></i> 📖 Menüden Yemek Seç
                     </button>
+                    ${!isMyPlate ? `
                     <button type="button" class="btn-copy-same-plate flex-1" onclick="clonePlateForAnotherPerson(${index})" title="${copyBtnTitle}">
-                        <i class="fa-solid ${copyBtnIcon}"></i> ${copyBtnText}
+                        <i class="fa-solid fa-handshake"></i> 🤝 Bana da Aynısından!
                     </button>
+                    ` : ''}
                 </div>
 
                 <div class="plate-status-row">
