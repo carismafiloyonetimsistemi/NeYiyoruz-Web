@@ -193,7 +193,7 @@ const els = {
     btnCloseMenuManager: document.getElementById('btnCloseMenuManager'),
     newFoodNameInput: document.getElementById('newFoodNameInput'),
     newFoodCategorySelect: document.getElementById('newFoodCategorySelect'),
-    newFoodPriceSelect: document.getElementById('newFoodPriceSelect'),
+    newFoodPriceInput: document.getElementById('newFoodPriceInput'),
     btnAddFoodItem: document.getElementById('btnAddFoodItem'),
     foodItemsManageList: document.getElementById('foodItemsManageList'),
     navTabs: document.querySelectorAll('.nav-tab'),
@@ -579,7 +579,9 @@ const FOOD_CATEGORIES = [
 const PRICE_TIERS = ['100 ₺', '120 ₺', '160 ₺', '200 ₺', '250 ₺', '320 ₺', '400 ₺', '500 ₺'];
 
 function renderFoodManageList() {
-    els.foodItemsManageList.innerHTML = state.foods.map(item => `
+    els.foodItemsManageList.innerHTML = state.foods.map(item => {
+        const numericPrice = parseFloat(String(item.price).replace(/[^0-9.]/g, '')) || 200;
+        return `
         <div class="food-manage-item">
             <div class="food-manage-left">
                 <span class="food-manage-emoji">${item.emoji}</span>
@@ -589,9 +591,15 @@ function renderFoodManageList() {
                         <select class="manage-select" onchange="updateItemCategory(${item.id}, this.value)">
                             ${FOOD_CATEGORIES.map(c => `<option value="${c.name}" ${item.category === c.name ? 'selected' : ''}>${c.emoji} ${c.name}</option>`).join('')}
                         </select>
-                        <select class="manage-select" onchange="updateItemPrice(${item.id}, this.value)">
-                            ${PRICE_TIERS.map(p => `<option value="${p}" ${item.price === p ? 'selected' : ''}>${p}</option>`).join('')}
-                        </select>
+                        <div class="manage-price-box" title="Fiyatı doğrudan değiştirebilir, zam geldiğinde buradan güncelleyebilirsiniz">
+                            <input type="number" class="manage-price-input" 
+                                   value="${numericPrice}" 
+                                   placeholder="Fiyat" 
+                                   min="0" step="5"
+                                   oninput="updateItemPrice(${item.id}, this.value)"
+                                   onchange="updateItemPrice(${item.id}, this.value)">
+                            <span class="manage-price-currency">₺</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -599,7 +607,8 @@ function renderFoodManageList() {
                 <i class="fa-solid fa-trash-can"></i>
             </button>
         </div>
-    `).join('');
+        `;
+    }).join('');
 
     els.menuCountBadge.innerText = state.foods.length;
 }
@@ -618,7 +627,8 @@ window.updateItemCategory = function(id, newCat) {
 window.updateItemPrice = function(id, newPrice) {
     const item = state.foods.find(f => f.id === id);
     if (item) {
-        item.price = newPrice;
+        const num = parseFloat(newPrice) || 0;
+        item.price = `${num} ₺`;
         localStorage.setItem('neyiyoruz_custom_foods', JSON.stringify(state.foods));
     }
 };
@@ -636,7 +646,8 @@ window.deleteFoodItem = function(id) {
 els.btnAddFoodItem.addEventListener('click', () => {
     const name = els.newFoodNameInput.value.trim();
     const category = els.newFoodCategorySelect.value;
-    const price = els.newFoodPriceSelect.value;
+    const priceNum = parseFloat(els.newFoodPriceInput.value) || 200;
+    const price = `${priceNum} ₺`;
     
     const matchedCategory = FOOD_CATEGORIES.find(c => c.name === category);
     const emoji = matchedCategory ? matchedCategory.emoji : '🍽️';
@@ -979,11 +990,21 @@ function setupPlatesData() {
             const isRunner = (person === state.runner);
             return {
                 person: person,
-                dish: sample.dish,
-                price: sample.price,
-                paid: isRunner, // Runner already paid for everyone
                 isRunner: isRunner,
+                paid: isRunner,
+                items: [
+                    { id: 'it_' + Date.now() + '_' + idx, name: sample.dish, price: sample.price, emoji: '🍽️', type: 'food' }
+                ]
             };
+        });
+    } else {
+        // Ensure legacy plates have items array
+        state.plates.forEach((p, idx) => {
+            if (!p.items || !Array.isArray(p.items)) {
+                p.items = [
+                    { id: 'it_' + Date.now() + '_' + idx, name: p.dish || 'Ana Menü', price: parseFloat(p.price) || 200, emoji: '🍽️', type: 'food' }
+                ];
+            }
         });
     }
 }
@@ -993,33 +1014,88 @@ function renderPlatesUI() {
         els.individualPlatesContainer.style.display = 'flex';
         els.equalModeContainer.style.display = 'none';
 
-        els.individualPlatesContainer.innerHTML = state.plates.map((plate, index) => `
-            <div class="individual-plate-item">
+        let grandTotal = 0;
+
+        els.individualPlatesContainer.innerHTML = state.plates.map((plate, index) => {
+            if (!plate.items || !Array.isArray(plate.items)) {
+                plate.items = [{ id: 'it_init_' + index, name: plate.dish || 'Ana Yemek', price: parseFloat(plate.price) || 200, emoji: '🍽️', type: 'food' }];
+            }
+
+            const personTotal = plate.items.reduce((sum, it) => sum + (parseFloat(it.price) || 0), 0);
+            plate.price = personTotal;
+            grandTotal += personTotal;
+
+            return `
+            <div class="individual-plate-item" data-plate-index="${index}">
                 <div class="plate-user-header">
                     <div class="plate-user-title">
                         <i class="fa-solid fa-user-circle text-orange"></i>
                         <span>${plate.person} ${plate.isRunner ? '<span style="color:#fbbf24; font-size:12px;">(Siparişçi / Ödeyen)</span>' : ''}</span>
                     </div>
+                    <div class="plate-user-total-badge">
+                        ${personTotal} ₺
+                    </div>
                 </div>
 
-                <div class="plate-inputs-row">
-                    <input type="text" class="plate-dish-input" value="${plate.dish}" placeholder="Yiyeceği yemek..." 
-                           onchange="updatePlateDish(${index}, this.value)">
-                    <input type="number" class="plate-price-input" value="${plate.price}" placeholder="Tutar ₺" 
-                           oninput="updatePlatePrice(${index}, this.value)">
+                <!-- Seçilen Yemek ve İçecekler Listesi -->
+                <div class="plate-items-container">
+                    ${plate.items.map((it, itemIdx) => `
+                        <div class="plate-single-item-row">
+                            <span class="plate-item-emoji">${it.emoji || (it.type === 'drink' ? '🥤' : '🍽️')}</span>
+                            <input type="text" class="plate-item-name-input" 
+                                   value="${it.name}" 
+                                   placeholder="Yemek veya içecek adı..." 
+                                   oninput="updatePlateItemName(${index}, ${itemIdx}, this.value)"
+                                   onchange="updatePlateItemName(${index}, ${itemIdx}, this.value)">
+                            <div class="plate-item-price-box" title="Fiyatı doğrudan değiştirebilir veya zam geldiğinde güncelleyebilirsiniz">
+                                <input type="number" class="plate-item-price-input" 
+                                       value="${it.price}" 
+                                       placeholder="0" min="0" step="5"
+                                       oninput="updatePlateItemPrice(${index}, ${itemIdx}, this.value)"
+                                       onchange="updatePlateItemPrice(${index}, ${itemIdx}, this.value)">
+                                <span class="plate-item-currency">₺</span>
+                            </div>
+                            ${plate.items.length > 1 ? `
+                                <button type="button" class="btn-remove-plate-item" onclick="removePlateItem(${index}, ${itemIdx})" title="Bu ürünü çıkar">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+
+                <!-- Hızlı İçecek ve İlave Ürün Ekleme Çipleri -->
+                <div class="plate-quick-chips">
+                    <button type="button" class="quick-chip quick-chip-drink" onclick="addQuickItemToPlate(${index}, 'Ayran', 35, '🥛', 'drink')">
+                        + 🥛 Ayran (35₺)
+                    </button>
+                    <button type="button" class="quick-chip quick-chip-drink" onclick="addQuickItemToPlate(${index}, 'Kola', 50, '🥤', 'drink')">
+                        + 🥤 Kola (50₺)
+                    </button>
+                    <button type="button" class="quick-chip quick-chip-drink" onclick="addQuickItemToPlate(${index}, 'Şalgam Suyu', 35, '🍷', 'drink')">
+                        + 🍷 Şalgam (35₺)
+                    </button>
+                    <button type="button" class="quick-chip quick-chip-drink" onclick="addQuickItemToPlate(${index}, 'Su', 15, '💧', 'drink')">
+                        + 💧 Su (15₺)
+                    </button>
+                    <button type="button" class="quick-chip" onclick="addQuickItemToPlate(${index}, 'Patates Kızartması', 90, '🍟', 'side')">
+                        + 🍟 Patates (90₺)
+                    </button>
+                    <button type="button" class="quick-chip quick-chip-add" onclick="addNewCustomItemToPlate(${index})">
+                        <i class="fa-solid fa-plus"></i> Özel İçecek / Ürün
+                    </button>
                 </div>
 
                 <div class="plate-status-row">
                     <button class="debt-status-btn ${plate.paid ? 'status-paid' : 'status-debt'}" onclick="togglePlatePaid(${index})">
-                        ${plate.paid ? '✓ Ödedi' : '❌ Borçlu (' + plate.price + ' ₺)'}
+                        ${plate.paid ? '✓ Ödedi' : '❌ Borçlu (' + personTotal + ' ₺)'}
                     </button>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
 
-        // Compute Total Cart
-        const total = state.plates.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
-        els.totalCartAmount.innerText = `${total} ₺`;
+        els.totalCartAmount.innerText = `${grandTotal} ₺`;
     } else {
         // Equal Split Mode
         els.individualPlatesContainer.style.display = 'none';
@@ -1052,18 +1128,77 @@ els.equalTotalInput.addEventListener('input', () => {
     renderPlatesUI();
 });
 
-window.updatePlateDish = function(index, value) {
-    if (state.plates[index]) {
-        state.plates[index].dish = value;
-    }
-};
-
-window.updatePlatePrice = function(index, value) {
-    if (state.plates[index]) {
-        state.plates[index].price = parseFloat(value) || 0;
+window.addQuickItemToPlate = function(personIndex, name, price, emoji, type) {
+    if (state.plates[personIndex]) {
+        if (!state.plates[personIndex].items) state.plates[personIndex].items = [];
+        state.plates[personIndex].items.push({
+            id: 'it_' + Date.now() + Math.random().toString(36).substr(2, 4),
+            name: name,
+            price: price,
+            emoji: emoji || '🍽️',
+            type: type || 'drink'
+        });
+        audio.init();
+        audio.tick();
         renderPlatesUI();
     }
 };
+
+window.addNewCustomItemToPlate = function(personIndex) {
+    if (state.plates[personIndex]) {
+        if (!state.plates[personIndex].items) state.plates[personIndex].items = [];
+        state.plates[personIndex].items.push({
+            id: 'it_' + Date.now(),
+            name: 'Yeni İçecek / Yan Ürün',
+            price: 45,
+            emoji: '🥤',
+            type: 'drink'
+        });
+        audio.init();
+        audio.tick();
+        renderPlatesUI();
+    }
+};
+
+window.removePlateItem = function(personIndex, itemIndex) {
+    if (state.plates[personIndex] && state.plates[personIndex].items) {
+        state.plates[personIndex].items.splice(itemIndex, 1);
+        renderPlatesUI();
+    }
+};
+
+window.updatePlateItemName = function(personIndex, itemIndex, value) {
+    if (state.plates[personIndex] && state.plates[personIndex].items && state.plates[personIndex].items[itemIndex]) {
+        state.plates[personIndex].items[itemIndex].name = value;
+    }
+};
+
+window.updatePlateItemPrice = function(personIndex, itemIndex, value) {
+    if (state.plates[personIndex] && state.plates[personIndex].items && state.plates[personIndex].items[itemIndex]) {
+        state.plates[personIndex].items[itemIndex].price = parseFloat(value) || 0;
+        updatePlatesTotalsOnly();
+    }
+};
+
+function updatePlatesTotalsOnly() {
+    let grandTotal = 0;
+    state.plates.forEach((plate, idx) => {
+        const personTotal = (plate.items || []).reduce((sum, it) => sum + (parseFloat(it.price) || 0), 0);
+        plate.price = personTotal;
+        grandTotal += personTotal;
+
+        const plateCard = els.individualPlatesContainer.children[idx];
+        if (plateCard) {
+            const badge = plateCard.querySelector('.plate-user-total-badge');
+            if (badge) badge.innerText = `${personTotal} ₺`;
+            const debtBtn = plateCard.querySelector('.debt-status-btn');
+            if (debtBtn && !plate.paid) {
+                debtBtn.innerText = `❌ Borçlu (${personTotal} ₺)`;
+            }
+        }
+    });
+    els.totalCartAmount.innerText = `${grandTotal} ₺`;
+}
 
 window.togglePlatePaid = function(index) {
     if (state.plates[index]) {
@@ -1077,19 +1212,27 @@ els.btnCopyOrderNote = function() {
     const runner = state.runner || 'Ersoy';
     const cuisine = state.winnerFood ? state.winnerFood.name : 'Yemek';
     
-    let text = `📋 Ne Yiyoruz Sipariş Özeti (${cuisine}):\n`;
-    text += `Siparişi Veren: ${runner}\n`;
+    let text = `📋 Ne Yiyoruz Sipariş Özeti (${cuisine})\n`;
+    text += `🛵 Siparişçi / Alacak Kişi: ${runner}\n`;
     text += `---------------------------------\n`;
 
-    let total = 0;
+    let grandTotal = 0;
     state.plates.forEach(p => {
-        text += `• ${p.person}: ${p.dish} (${p.price} ₺)\n`;
-        total += parseFloat(p.price) || 0;
+        const items = p.items && p.items.length ? p.items : [{ name: p.dish || 'Ana Menü', price: p.price || 0, emoji: '🍽️' }];
+        const personTotal = items.reduce((sum, it) => sum + (parseFloat(it.price) || 0), 0);
+        grandTotal += personTotal;
+
+        text += `👤 ${p.person}:\n`;
+        items.forEach(it => {
+            text += `   • ${it.emoji || '🍽️'} ${it.name} (${it.price} ₺)\n`;
+        });
+        text += `   Kişi Toplamı: ${personTotal} ₺\n\n`;
     });
 
     text += `---------------------------------\n`;
-    text += `TOPLAM HESAP: ${total} ₺\n`;
-    text += `Borçlular: ${state.plates.filter(p => !p.paid && !p.isRunner).map(p => p.person + ' (' + p.price + ' ₺)').join(', ') || 'Yok (Herkes Ödedi)'}`;
+    text += `💰 TOPLAM HESAP: ${grandTotal} ₺\n`;
+    const debtors = state.plates.filter(p => !p.paid && !p.isRunner);
+    text += `Borçlular: ${debtors.map(p => p.person + ' (' + ((p.items || []).reduce((s, i) => s + (parseFloat(i.price)||0), 0)) + ' ₺)').join(', ') || 'Yok (Herkes Ödedi)'}`;
 
     navigator.clipboard.writeText(text).then(() => {
         els.orderNoteCopiedNotice.style.display = 'block';
@@ -1103,21 +1246,28 @@ document.getElementById('btnCopyOrderNote').addEventListener('click', els.btnCop
 // --- BORCLARI KAYDET ---
 els.btnSaveDebtSummary.addEventListener('click', () => {
     const runner = state.runner || 'Ersoy';
-    const total = state.plates.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
+    let grandTotal = 0;
+    const platesSummary = state.plates.map(p => {
+        const items = p.items || [];
+        const personTotal = items.reduce((sum, it) => sum + (parseFloat(it.price) || 0), 0);
+        grandTotal += personTotal;
+        const itemNames = items.map(i => `${i.name} (${i.price} ₺)`).join(' + ');
+        return {
+            person: p.person,
+            dish: itemNames || p.dish || 'Menü',
+            price: personTotal,
+            paid: p.paid,
+            isRunner: p.isRunner
+        };
+    });
 
     const record = {
         id: Date.now(),
         date: new Date().toLocaleDateString('tr-TR'),
         cuisine: state.winnerFood ? state.winnerFood.name : 'Yemek',
         runner: runner,
-        total: total,
-        plates: state.plates.map(p => ({
-            person: p.person,
-            dish: p.dish,
-            price: p.price,
-            paid: p.paid,
-            isRunner: p.isRunner
-        })),
+        total: grandTotal,
+        plates: platesSummary,
     };
 
     state.debtsHistory.unshift(record);

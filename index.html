@@ -478,15 +478,10 @@
                         <option value="Diğer Lezzetler" data-emoji="🍽️">🍽️ Diğer Lezzetler</option>
                     </select>
 
-                    <select id="newFoodPriceSelect" class="compact-select w-36">
-                        <option value="120 ₺">120 ₺ (Ekonomik)</option>
-                        <option value="160 ₺">160 ₺ (Hafif Menü)</option>
-                        <option value="200 ₺">200 ₺ (Standart)</option>
-                        <option value="250 ₺" selected>250 ₺ (Doyurucu)</option>
-                        <option value="320 ₺">320 ₺ (Porsiyon/Et)</option>
-                        <option value="400 ₺">400 ₺ (Ziyafet)</option>
-                        <option value="500 ₺">500 ₺ (Özel Menü)</option>
-                    </select>
+                    <div class="input-with-currency w-36">
+                        <input type="number" id="newFoodPriceInput" class="compact-input" placeholder="Fiyat (₺)" min="0" step="5" value="250">
+                        <span class="currency-affix">₺</span>
+                    </div>
                 </div>
                 <button class="btn btn-primary btn-block btn-sm mt-2" id="btnAddFoodItem">
                     <i class="fa-solid fa-plus"></i> Listeye Ekle
