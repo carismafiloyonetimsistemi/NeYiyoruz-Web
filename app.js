@@ -1128,18 +1128,18 @@ const MENU_CATEGORIES = [
     'Tatlılar'
 ];
 
+let activeMenuPersonIndex = null;
+
 function getTargetPersonIndex() {
     if (!state.plates || state.plates.length === 0) {
         setupPlatesData();
     }
-    const select = els.menuTargetPersonSelect;
-    if (select && select.value !== '') {
-        const val = parseInt(select.value, 10);
-        if (!isNaN(val) && state.plates[val]) return val;
+    if (activeMenuPersonIndex !== null && state.plates[activeMenuPersonIndex]) {
+        return activeMenuPersonIndex;
     }
-    const myName = state.user ? state.user.name : null;
+    const myName = (state.user && state.user.name) ? state.user.name.trim() : null;
     if (myName && state.plates) {
-        const idx = state.plates.findIndex(p => p.person.toLowerCase() === myName.toLowerCase());
+        const idx = state.plates.findIndex(p => p.person.trim().toLowerCase() === myName.toLowerCase());
         if (idx >= 0) return idx;
     }
     return 0;
@@ -1147,10 +1147,8 @@ function getTargetPersonIndex() {
 
 window.openMenuForPerson = function(personIndex) {
     setupPlatesData();
+    activeMenuPersonIndex = personIndex;
     navigateTo('screen-menu');
-    if (els.menuTargetPersonSelect) {
-        els.menuTargetPersonSelect.value = String(personIndex);
-    }
     renderMenuScreen();
 };
 
