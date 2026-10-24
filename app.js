@@ -542,7 +542,7 @@ async function handleAuthSubmit() {
                 if (errMsg.includes('Invalid login credentials')) {
                     showAuthAlert('E-posta veya şifre hatalı! Lütfen bilgilerinizi kontrol ediniz.');
                 } else if (errMsg.includes('Email not confirmed')) {
-                    showAuthAlert('Lütfen e-posta adresinize gelen onay linkine tıklayınız.');
+                    showAuthAlert('E-posta henüz onaylanmamış! Lütfen gelen kutunuzdaki onay linkine tıklayınız (veya Supabase panelinde "Confirm email" ayarını kapatınız).');
                 } else if (errMsg.includes('Failed to fetch') || errMsg.includes('521') || errMsg.includes('NetworkError')) {
                     showAuthAlert('Supabase sunucusu şu an aktif ediliyor / uyanıyor. Lütfen 1 dakika sonra tekrar deneyiniz.');
                 } else {
