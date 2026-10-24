@@ -1,9 +1,12 @@
 {
-  "name": "Ne Yiyoruz? - Yemek Karar & Çarkıfelek",
+  "name": "Ne Yiyoruz? - Yemek Karar & Sipariş",
   "short_name": "Ne Yiyoruz?",
-  "description": "Bugün ne yesek derdine son! Arkadaşlarınla oyla, swipe yap, çarkı çevir.",
-  "start_url": "/index.html",
+  "description": "Bugün ne yesek derdine son! Arkadaşlarınla oyla, yemek seç, adil hesap bölüş.",
+  "start_url": "/",
+  "scope": "/",
+  "id": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0b0f19",
   "theme_color": "#0f172a",
   "icons": [
