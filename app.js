@@ -1188,6 +1188,62 @@ window.openMenuForPerson = function(personIndex) {
     renderMenuScreen();
 };
 
+// --- DİNAMİK YEMEK MENÜSÜ VE SİLME YÖNETİMİ ---
+let currentFoodCatalog = JSON.parse(localStorage.getItem('neyiyoruz_custom_catalog')) || null;
+if (!currentFoodCatalog || !Array.isArray(currentFoodCatalog) || currentFoodCatalog.length === 0) {
+    currentFoodCatalog = [...FOOD_CATALOG];
+    localStorage.setItem('neyiyoruz_custom_catalog', JSON.stringify(currentFoodCatalog));
+}
+
+function getActiveFoodCatalog() {
+    return currentFoodCatalog;
+}
+
+window.deleteCatalogFoodItem = function(itemId, event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    const item = currentFoodCatalog.find(f => f.id === itemId);
+    const itemName = item ? item.name : 'Yemek';
+
+    if (!confirm(`"${itemName}" lezzetini menüden tamamen silmek istediğinize emin misiniz?`)) {
+        return;
+    }
+
+    currentFoodCatalog = currentFoodCatalog.filter(f => f.id !== itemId);
+    localStorage.setItem('neyiyoruz_custom_catalog', JSON.stringify(currentFoodCatalog));
+
+    // Favorilerden de çıkar
+    if (state.favoriteItemIds) {
+        state.favoriteItemIds = state.favoriteItemIds.filter(id => id !== itemId);
+        localStorage.setItem('neyiyoruz_fav_foods', JSON.stringify(state.favoriteItemIds));
+    }
+
+    renderMenuScreen();
+    if (state.plates && state.plates.length > 0) renderPlatesUI();
+    if (typeof window.showAppToast === 'function') {
+        window.showAppToast(`🗑️ "${itemName}" menüden silindi.`, 'info');
+    }
+};
+
+window.removeItemFromPlateByName = function(dishName, targetIdx) {
+    const idx = (targetIdx !== undefined && targetIdx !== null) ? targetIdx : getTargetPersonIndex();
+    const plate = state.plates[idx];
+    if (!plate || !plate.items) return;
+
+    plate.items = plate.items.filter(it => it.name.trim().toLowerCase() !== dishName.trim().toLowerCase());
+    
+    updateMenuStickyCartBar();
+    renderMenuScreen();
+    renderPlatesUI();
+    broadcastPlatesChange();
+
+    if (typeof window.showAppToast === 'function') {
+        window.showAppToast(`🗑️ "${dishName}" tabağınızdan çıkarıldı.`, 'info');
+    }
+};
+
 function renderMenuScreen() {
     setupPlatesData();
     const participants = getActiveParticipants();
@@ -1225,8 +1281,9 @@ function renderMenuScreen() {
     }
 
     // 3. Filter Foods
+    const catalog = getActiveFoodCatalog();
     const q = currentMenuSearch.trim().toLowerCase();
-    const filteredFoods = FOOD_CATALOG.filter(item => {
+    const filteredFoods = catalog.filter(item => {
         const matchesCategory = (currentMenuCategory === 'Tümü' || item.category === currentMenuCategory);
         const matchesSearch = !q || item.name.toLowerCase().includes(q) || (item.desc && item.desc.toLowerCase().includes(q)) || item.category.toLowerCase().includes(q);
         return matchesCategory && matchesSearch;
@@ -1249,6 +1306,10 @@ function renderMenuScreen() {
             els.menuItemsGrid.innerHTML = filteredFoods.map(item => {
                 const qty = menuQuantities[item.id] || 1;
                 const isFav = Boolean(state.favoriteItemIds && state.favoriteItemIds.includes(item.id));
+                const targetPlate = (state.plates && state.plates[targetIdx]) ? state.plates[targetIdx] : null;
+                const plateItem = targetPlate ? (targetPlate.items || []).find(it => it.name.trim().toLowerCase() === item.name.trim().toLowerCase()) : null;
+                const inPlateQty = plateItem ? (plateItem.qty || 1) : 0;
+
                 return `
                 <div class="menu-catalog-card">
                     <div class="catalog-card-left">
@@ -1256,14 +1317,31 @@ function renderMenuScreen() {
                         <div class="catalog-card-details">
                             <div class="catalog-card-title-row">
                                 <h4 class="catalog-card-title">${item.name}</h4>
-                                <button type="button" class="btn-fav-star ${isFav ? 'active' : ''}" 
-                                        onclick="toggleFavoriteFood('${item.id}', event)" 
-                                        title="${isFav ? 'Favorilerden Çıkar' : 'Favorilere Ekle (Sepette Hızlı Ekle)'}">
-                                    <i class="${isFav ? 'fa-solid fa-star' : 'fa-regular fa-star'}"></i>
-                                </button>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <button type="button" class="btn-fav-star ${isFav ? 'active' : ''}" 
+                                            onclick="toggleFavoriteFood('${item.id}', event)" 
+                                            title="${isFav ? 'Favorilerden Çıkar' : 'Favorilere Ekle (Sepette Hızlı Ekle)'}">
+                                        <i class="${isFav ? 'fa-solid fa-star' : 'fa-regular fa-star'}"></i>
+                                    </button>
+                                    <button type="button" class="btn-delete-catalog-food" 
+                                            onclick="deleteCatalogFoodItem('${item.id}', event)" 
+                                            title="Bu yemeği menüden tamamen sil">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
                             </div>
                             <span class="catalog-card-desc">${item.desc}</span>
                             <div class="catalog-card-price">${item.price} ₺</div>
+                            ${inPlateQty > 0 ? `
+                                <div class="catalog-plate-status">
+                                    <span class="catalog-in-plate-badge">✓ Tabağınızda: ${inPlateQty} adet</span>
+                                    <button type="button" class="btn-remove-from-plate" 
+                                            onclick="removeItemFromPlateByName('${item.name.replace(/'/g, "\'")}', ${targetIdx})" 
+                                            title="Bu yemeği tabağımdan çıkar">
+                                        <i class="fa-solid fa-trash-can"></i> Çıkar
+                                    </button>
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                     <div class="catalog-card-actions">
@@ -1429,12 +1507,13 @@ if (els.btnStickyGoToCart) {
     els.btnStickyGoToCart.addEventListener('click', handleConfirmPlateAndProceed);
 }
 
-if (els.btnOpenCustomDishPrompt) {
-    els.btnOpenCustomDishPrompt.addEventListener('click', () => {
+const btnCustomDish = document.getElementById('btnOpenCustomDishPrompt');
+if (btnCustomDish) {
+    btnCustomDish.onclick = () => {
         const targetIdx = getTargetPersonIndex();
         promptAddItemToPlate(targetIdx);
         updateMenuStickyCartBar();
-    });
+    };
 }
 
 if (els.btnGoToMenu) {

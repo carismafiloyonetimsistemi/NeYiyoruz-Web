@@ -2261,3 +2261,61 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3) !important;
 }
+
+/* Menü Kartı Menüden Silme Butonu */
+.btn-delete-catalog-food {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #ef4444;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+.btn-delete-catalog-food:hover {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: #ef4444;
+    transform: scale(1.15);
+}
+
+/* Tabağımdan Çıkar Rozet Butonu */
+.catalog-plate-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+.catalog-in-plate-badge {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+}
+.btn-remove-from-plate {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border: 1px solid rgba(239, 68, 68, 0.35) !important;
+    color: #fca5a5 !important;
+    border-radius: 6px !important;
+    padding: 3px 8px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-remove-from-plate:hover {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+}
