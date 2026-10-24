@@ -1641,3 +1641,42 @@ body {
     font-weight: 700;
     color: #f8fafc;
 }
+
+
+/* Quantity Stepper for Plate Items */
+.plate-item-qty-stepper {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 1px;
+    flex-shrink: 0;
+}
+.btn-qty {
+    background: transparent;
+    border: none;
+    color: #e2e8f0;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+.btn-qty:hover {
+    background: rgba(249, 115, 22, 0.3);
+    color: #f97316;
+}
+.plate-item-qty-text {
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffffff;
+    min-width: 18px;
+    text-align: center;
+    padding: 0 2px;
+}

@@ -1327,22 +1327,36 @@ function setupPlatesData() {
         state.plates = participants.map((person, idx) => {
             const sample = samples[idx % samples.length];
             const isRunner = (person === state.runner);
+            const unitPrice = parseFloat(sample.price) || 200;
             return {
                 person: person,
                 isRunner: isRunner,
                 paid: isRunner,
                 items: [
-                    { id: 'it_' + Date.now() + '_' + idx, name: sample.dish, price: sample.price, emoji: '🍽️', type: 'food' }
+                    { 
+                        id: 'it_' + Date.now() + '_' + idx, 
+                        name: sample.dish, 
+                        qty: 1, 
+                        unitPrice: unitPrice, 
+                        price: unitPrice, 
+                        emoji: sample.emoji || '🍽️', 
+                        type: 'food' 
+                    }
                 ]
             };
         });
     } else {
-        // Ensure legacy plates have items array
         state.plates.forEach((p, idx) => {
             if (!p.items || !Array.isArray(p.items)) {
+                const uPrice = parseFloat(p.price) || 200;
                 p.items = [
-                    { id: 'it_' + Date.now() + '_' + idx, name: p.dish || 'Ana Menü', price: parseFloat(p.price) || 200, emoji: '🍽️', type: 'food' }
+                    { id: 'it_' + Date.now() + '_' + idx, name: p.dish || 'Ana Menü', qty: 1, unitPrice: uPrice, price: uPrice, emoji: '🍽️', type: 'food' }
                 ];
+            } else {
+                p.items.forEach(it => {
+                    if (!it.qty) it.qty = 1;
+                    if (it.unitPrice === undefined) it.unitPrice = parseFloat(it.price) || 50;
+                });
             }
         });
     }
@@ -1378,7 +1392,12 @@ function renderPlatesUI() {
 
                 <!-- Seçilen Yemek ve İçecekler Listesi -->
                 <div class="plate-items-container">
-                    ${plate.items.map((it, itemIdx) => `
+                    ${plate.items.map((it, itemIdx) => {
+                        const qty = it.qty || 1;
+                        const unitPrice = it.unitPrice !== undefined ? it.unitPrice : it.price;
+                        const totalPrice = it.price !== undefined ? it.price : (qty * unitPrice);
+
+                        return `
                         <div class="plate-single-item-row">
                             <span class="plate-item-emoji">${it.emoji || (it.type === 'drink' ? '🥤' : '🍽️')}</span>
                             <input type="text" class="plate-item-name-input" 
@@ -1386,9 +1405,17 @@ function renderPlatesUI() {
                                    placeholder="Yemek veya içecek adı..." 
                                    oninput="updatePlateItemName(${index}, ${itemIdx}, this.value)"
                                    onchange="updatePlateItemName(${index}, ${itemIdx}, this.value)">
-                            <div class="plate-item-price-box" title="Fiyatı doğrudan değiştirebilir veya zam geldiğinde güncelleyebilirsiniz">
+                            
+                            <!-- Adet Stepper: [ - ] 1 [ + ] -->
+                            <div class="plate-item-qty-stepper" title="Adet / Porsiyon Sayısı">
+                                <button type="button" class="btn-qty" onclick="changePlateItemQty(${index}, ${itemIdx}, -1)">-</button>
+                                <span class="plate-item-qty-text">${qty}</span>
+                                <button type="button" class="btn-qty" onclick="changePlateItemQty(${index}, ${itemIdx}, 1)">+</button>
+                            </div>
+
+                            <div class="plate-item-price-box" title="Toplam Tutar (Birim: ${unitPrice} ₺)">
                                 <input type="number" class="plate-item-price-input" 
-                                       value="${it.price}" 
+                                       value="${totalPrice}" 
                                        placeholder="0" min="0" step="5"
                                        oninput="updatePlateItemPrice(${index}, ${itemIdx}, this.value)"
                                        onchange="updatePlateItemPrice(${index}, ${itemIdx}, this.value)">
@@ -1400,7 +1427,8 @@ function renderPlatesUI() {
                                 </button>
                             ` : ''}
                         </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
 
                 <!-- Hızlı İçecek ve İlave Ürün Ekleme Çipleri -->
@@ -1467,16 +1495,54 @@ els.equalTotalInput.addEventListener('input', () => {
     renderPlatesUI();
 });
 
+window.changePlateItemQty = function(personIndex, itemIndex, delta) {
+    const plate = state.plates[personIndex];
+    if (!plate || !plate.items || !plate.items[itemIndex]) return;
+
+    const item = plate.items[itemIndex];
+    if (!item.qty) item.qty = 1;
+    if (item.unitPrice === undefined) item.unitPrice = parseFloat(item.price) || 50;
+
+    const newQty = item.qty + delta;
+    if (newQty <= 0) {
+        if (plate.items.length > 1) {
+            removePlateItem(personIndex, itemIndex);
+        } else {
+            item.qty = 1;
+            item.price = item.unitPrice;
+            renderPlatesUI();
+        }
+        return;
+    }
+
+    item.qty = newQty;
+    item.price = Math.round(item.qty * item.unitPrice);
+    audio.init();
+    audio.tick();
+    renderPlatesUI();
+};
+
 window.addQuickItemToPlate = function(personIndex, name, price, emoji, type) {
     if (state.plates[personIndex]) {
         if (!state.plates[personIndex].items) state.plates[personIndex].items = [];
-        state.plates[personIndex].items.push({
-            id: 'it_' + Date.now() + Math.random().toString(36).substr(2, 4),
-            name: name,
-            price: price,
-            emoji: emoji || '🍽️',
-            type: type || 'drink'
-        });
+        
+        // If an item with the same name already exists in this plate, increment its quantity!
+        const existing = state.plates[personIndex].items.find(it => it.name.trim().toLowerCase() === name.trim().toLowerCase());
+        if (existing) {
+            existing.qty = (existing.qty || 1) + 1;
+            if (existing.unitPrice === undefined) existing.unitPrice = price;
+            existing.price = Math.round(existing.qty * existing.unitPrice);
+        } else {
+            state.plates[personIndex].items.push({
+                id: 'it_' + Date.now() + Math.random().toString(36).substr(2, 4),
+                name: name,
+                qty: 1,
+                unitPrice: price,
+                price: price,
+                emoji: emoji || '🍽️',
+                type: type || 'drink'
+            });
+        }
         audio.init();
         audio.tick();
         renderPlatesUI();
@@ -1489,6 +1555,8 @@ window.addNewCustomItemToPlate = function(personIndex) {
         state.plates[personIndex].items.push({
             id: 'it_' + Date.now(),
             name: 'Yeni İçecek / Yan Ürün',
+            qty: 1,
+            unitPrice: 45,
             price: 45,
             emoji: '🥤',
             type: 'drink'
@@ -1514,7 +1582,10 @@ window.updatePlateItemName = function(personIndex, itemIndex, value) {
 
 window.updatePlateItemPrice = function(personIndex, itemIndex, value) {
     if (state.plates[personIndex] && state.plates[personIndex].items && state.plates[personIndex].items[itemIndex]) {
-        state.plates[personIndex].items[itemIndex].price = parseFloat(value) || 0;
+        const item = state.plates[personIndex].items[itemIndex];
+        const val = parseFloat(value) || 0;
+        item.price = val;
+        item.unitPrice = (item.qty && item.qty > 0) ? Math.round((val / item.qty) * 100) / 100 : val;
         updatePlatesTotalsOnly();
     }
 };
@@ -1563,7 +1634,8 @@ els.btnCopyOrderNote = function() {
 
         text += `👤 ${p.person}:\n`;
         items.forEach(it => {
-            text += `   • ${it.emoji || '🍽️'} ${it.name} (${it.price} ₺)\n`;
+            const qtyStr = (it.qty && it.qty > 1) ? `${it.qty}x ` : '';
+            text += `   • ${it.emoji || '🍽️'} ${qtyStr}${it.name} (${it.price} ₺)\n`;
         });
         text += `   Kişi Toplamı: ${personTotal} ₺\n\n`;
     });
