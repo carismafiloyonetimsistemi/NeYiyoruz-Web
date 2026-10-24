@@ -620,11 +620,21 @@ els.logoutBtn.addEventListener('click', async () => {
     navigateTo('screen-auth');
 });
 
+// Helper for active room participants
+function getActiveParticipants() {
+    if (state.room && state.room.participants && state.room.participants.length > 0) {
+        return state.room.participants;
+    }
+    const currentName = state.user ? state.user.name : 'Siz';
+    return [currentName];
+}
+
 // --- 7. ROOM SYSTEM ---
 function createRoom(title) {
     const code = Math.floor(1000 + Math.random() * 9000).toString();
     const roomTitle = title || 'Günün Yemeği';
-    const participants = [state.user ? state.user.name : 'Ersoy', 'Ahmet (Ofis)', 'Can'];
+    const currentUserName = state.user ? state.user.name : 'Siz';
+    const participants = [currentUserName];
 
     state.room = {
         code: code,
@@ -639,14 +649,49 @@ function joinRoom(code) {
     if (!code) return alert('Lütfen geçerli bir oda kodu giriniz.');
     const userName = state.user ? state.user.name : 'Yeni Katılımcı';
     
+    let participants = [userName];
+    if (state.room && state.room.code === code) {
+        participants = state.room.participants;
+        if (!participants.includes(userName)) {
+            participants.push(userName);
+        }
+    }
+
     state.room = {
         code: code,
-        title: 'Lezzet Grubu #' + code,
-        participants: ['Ersoy', 'Ahmet', userName],
+        title: state.room?.title || ('Lezzet Grubu #' + code),
+        participants: participants,
     };
 
     renderActiveRoom();
 }
+
+window.addParticipantToRoom = function(name) {
+    const clean = (name || '').trim();
+    if (!clean) return;
+    if (!state.room) {
+        createRoom('Yemek Grubu');
+    }
+    if (!state.room.participants.includes(clean)) {
+        state.room.participants.push(clean);
+        renderActiveRoom();
+        if (state.plates) {
+            setupPlatesData();
+            renderPlatesUI();
+        }
+    }
+};
+
+window.removeParticipantFromRoom = function(index) {
+    if (state.room && state.room.participants.length > 1) {
+        state.room.participants.splice(index, 1);
+        renderActiveRoom();
+        if (state.plates) {
+            setupPlatesData();
+            renderPlatesUI();
+        }
+    }
+};
 
 function renderActiveRoom() {
     els.activeRoomBox.style.display = 'block';
@@ -655,12 +700,31 @@ function renderActiveRoom() {
     els.participantCount.innerText = state.room.participants.length;
     els.menuCountBadge.innerText = state.foods.length;
 
-    els.participantsList.innerHTML = state.room.participants.map(p => `
+    els.participantsList.innerHTML = state.room.participants.map((p, idx) => `
         <span class="chip">
             <i class="fa-solid fa-circle-user text-orange"></i> ${p}
+            ${state.room.participants.length > 1 ? `
+                <button type="button" class="chip-delete-btn" onclick="removeParticipantFromRoom(${idx})" title="Odadakilerden Çıkar">&times;</button>
+            ` : ''}
         </span>
-    `).join('');
+    `).join('') + `
+        <button type="button" class="chip-add-btn" id="btnQuickAddFriend">
+            <i class="fa-solid fa-user-plus"></i> + Kişi Ekle
+        </button>
+    `;
 
+    const addBtn = document.getElementById('btnQuickAddFriend');
+    if (addBtn) {
+        addBtn.onclick = () => {
+            const name = prompt('Odaya eklenecek kişinin adını yazın:');
+            if (name && name.trim()) {
+                window.addParticipantToRoom(name.trim());
+            }
+        };
+    }
+
+    drawWheel();
+    populateVolunteerSelect();
     els.activeRoomBox.scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -943,13 +1007,13 @@ els.btnSkipToWheel.addEventListener('click', () => {
 
 // --- 10. RUNNER SELECTION: VOLUNTEER OR WHEEL ---
 function populateVolunteerSelect() {
-    const participants = state.room ? state.room.participants : ['Ersoy', 'Ahmet', 'Can', 'Ayşe'];
+    const participants = getActiveParticipants();
     els.volunteerSelect.innerHTML = '<option value="">Gruptan Birini Seç...</option>' + 
         participants.map(p => `<option value="${p}">${p}</option>`).join('');
 }
 
 els.btnVolunteerMyself.addEventListener('click', () => {
-    const myName = state.user ? state.user.name : 'Ersoy';
+    const myName = state.user ? state.user.name : (getActiveParticipants()[0] || 'Ben');
     selectRunnerDirectly(myName);
 });
 
@@ -972,7 +1036,7 @@ function drawWheel() {
     const width = canvas.width;
     const height = canvas.height;
     const radius = width / 2 - 10;
-    const participants = state.room ? state.room.participants : ['Ersoy', 'Ahmet', 'Can', 'Ayşe'];
+    const participants = getActiveParticipants();
     const count = participants.length;
     const sliceAngle = (2 * Math.PI) / count;
 
@@ -1031,7 +1095,7 @@ els.btnSpinWheel.addEventListener('click', () => {
     els.btnSpinWheel.disabled = true;
     els.runnerResultBox.style.display = 'none';
 
-    const participants = state.room ? state.room.participants : ['Ersoy', 'Ahmet', 'Can', 'Ayşe'];
+    const participants = getActiveParticipants();
     const totalSlices = participants.length;
     const randomRotations = 6 + Math.random() * 4;
     const targetSlice = Math.floor(Math.random() * totalSlices);
@@ -1090,7 +1154,7 @@ els.btnProceedToOrder.addEventListener('click', () => {
 // --- 11. BİREYSEL TABAKLAR & ADALETLİ HESAP BÖLÜŞÜMÜ (INDIVIDUAL PLATES & FAIR SPLIT) ---
 function renderResultScreen() {
     const food = state.winnerFood || state.foods[0];
-    const runner = state.runner || (state.user ? state.user.name : 'Ersoy');
+    const runner = state.runner || (state.user ? state.user.name : (getActiveParticipants()[0] || 'Siparişçi'));
 
     els.finalFoodTitle.innerText = `${food.name}!`;
     els.winnerFoodEmoji.innerText = food.emoji;
@@ -1111,7 +1175,7 @@ function renderResultScreen() {
 }
 
 function setupPlatesData() {
-    const participants = state.room ? state.room.participants : ['Ersoy', 'Ahmet', 'Can'];
+    const participants = getActiveParticipants();
     const cuisine = state.winnerFood ? state.winnerFood.name : 'default';
     const samples = SAMPLE_DISHES[cuisine] || SAMPLE_DISHES['default'];
 
@@ -1340,7 +1404,7 @@ window.togglePlatePaid = function(index) {
 
 // --- SIPARIS LISTESI & NOTUNU KOPYALA ---
 els.btnCopyOrderNote = function() {
-    const runner = state.runner || 'Ersoy';
+    const runner = state.runner || state.user?.name || getActiveParticipants()[0] || 'Siparişçi';
     const cuisine = state.winnerFood ? state.winnerFood.name : 'Yemek';
     
     let text = `📋 Ne Yiyoruz Sipariş Özeti (${cuisine})\n`;
@@ -1376,7 +1440,7 @@ document.getElementById('btnCopyOrderNote').addEventListener('click', els.btnCop
 
 // --- BORCLARI KAYDET ---
 els.btnSaveDebtSummary.addEventListener('click', () => {
-    const runner = state.runner || 'Ersoy';
+    const runner = state.runner || state.user?.name || getActiveParticipants()[0] || 'Siparişçi';
     let grandTotal = 0;
     const platesSummary = state.plates.map(p => {
         const items = p.items || [];
