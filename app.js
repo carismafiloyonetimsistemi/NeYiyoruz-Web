@@ -1509,10 +1509,9 @@ if (els.btnStickyGoToCart) {
 
 const btnCustomDish = document.getElementById('btnOpenCustomDishPrompt');
 if (btnCustomDish) {
-    btnCustomDish.onclick = () => {
-        const targetIdx = getTargetPersonIndex();
-        promptAddItemToPlate(targetIdx);
-        updateMenuStickyCartBar();
+    btnCustomDish.onclick = (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        window.openAddFoodModal();
     };
 }
 
@@ -3309,18 +3308,22 @@ if (btnTopCustom) {
 window.openAddFoodModal = function() {
     const modal = document.getElementById('modalAddNewFood');
     if (modal) {
+        modal.style.display = 'flex';
         modal.classList.add('active');
         const nameInput = document.getElementById('customFoodNameInput');
         if (nameInput) {
             nameInput.value = '';
-            setTimeout(() => nameInput.focus(), 120);
+            setTimeout(() => { if (nameInput && nameInput.focus) nameInput.focus(); }, 150);
         }
     }
 };
 
 window.closeAddFoodModal = function() {
     const modal = document.getElementById('modalAddNewFood');
-    if (modal) modal.classList.remove('active');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+    }
 };
 
 window.handleAddNewFoodSubmit = function(e) {
