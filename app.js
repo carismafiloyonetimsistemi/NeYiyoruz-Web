@@ -991,14 +991,7 @@ if (els.btnWheelToOrder) {
     });
 }
 
-if (els.btnQuickAddFriendWheel) {
-    els.btnQuickAddFriendWheel.addEventListener('click', () => {
-        const name = prompt('Odaya ve siparişçiye eklenecek kişinin adını yazın:');
-        if (name && name.trim()) {
-            window.addParticipantToRoom(name.trim());
-        }
-    });
-}
+
 
 if (els.btnStartMatching) {
     els.btnStartMatching.addEventListener('click', () => {
