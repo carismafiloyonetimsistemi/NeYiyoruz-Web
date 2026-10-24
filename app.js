@@ -695,16 +695,27 @@ function createRoom(title) {
     const currentUserName = state.user ? state.user.name : 'Siz';
     const participants = [currentUserName];
 
+    // Kullanıcının seçtiği süreyi doğrudan aktif çipten oku (15 dk seçildiyse kesinlikle 15 dk olsun)
+    const activeChip = document.querySelector('#createTimerChips .timer-chip.active');
+    const roomMins = activeChip ? parseInt(activeChip.dataset.mins, 10) : selectedTimerMinutes;
+    selectedTimerMinutes = roomMins;
+
+    const timerEndTime = roomMins > 0 ? (Date.now() + roomMins * 60 * 1000) : null;
+
     state.room = {
         code: code,
         title: roomTitle,
         participants: participants,
-        timerMinutes: selectedTimerMinutes,
-        timerEndTime: selectedTimerMinutes > 0 ? (Date.now() + selectedTimerMinutes * 60 * 1000) : null
+        timerMinutes: roomMins,
+        timerEndTime: timerEndTime
     };
 
-    if (selectedTimerMinutes > 0) {
-        startRoomCountdown(state.room.timerEndTime);
+    if (roomMins > 0) {
+        startRoomCountdown(timerEndTime);
+    } else {
+        if (roomTimerInterval) clearInterval(roomTimerInterval);
+        roomTimerInterval = null;
+        if (els.roomTimerBar) els.roomTimerBar.style.display = 'none';
     }
 
     renderActiveRoom();
@@ -780,6 +791,21 @@ function renderActiveRoom() {
     els.currentRoomCodeBadge.innerText = state.room.code;
     els.participantCount.innerText = state.room.participants.length;
     els.menuCountBadge.innerText = state.foods.length;
+
+    // Oda sayacını ve aktif çipi güncelle
+    const roomMins = (state.room && state.room.timerMinutes !== undefined) ? state.room.timerMinutes : selectedTimerMinutes;
+    if (els.activeRoomTimerLabel) {
+        els.activeRoomTimerLabel.innerText = roomMins > 0 ? `${roomMins} Dakika` : 'Süresiz';
+    }
+    const activeChips = document.querySelectorAll('#activeTimerChips .timer-chip');
+    activeChips.forEach(chip => {
+        const chipMins = parseInt(chip.dataset.mins, 10);
+        if (chipMins === roomMins) {
+            chip.classList.add('active');
+        } else {
+            chip.classList.remove('active');
+        }
+    });
 
     els.participantsList.innerHTML = state.room.participants.map((p, idx) => `
         <span class="chip">
@@ -2163,8 +2189,9 @@ function setupTimerPresetListeners() {
         chip.addEventListener('click', () => {
             activeChips.forEach(c => c.classList.remove('active'));
             chip.classList.add('active');
-            const mins = parseInt(chip.dataset.mins) || 0;
+            const mins = parseInt(chip.dataset.mins, 10);
             setRoomTimer(mins);
+            broadcastRoomState();
         });
     });
 
@@ -2177,9 +2204,22 @@ function setupTimerPresetListeners() {
 
 function setRoomTimer(minutes) {
     selectedTimerMinutes = minutes;
+    if (state.room) {
+        state.room.timerMinutes = minutes;
+    }
     if (els.activeRoomTimerLabel) {
         els.activeRoomTimerLabel.innerText = minutes > 0 ? `${minutes} Dakika` : 'Süresiz';
     }
+
+    const activeChips = document.querySelectorAll('#activeTimerChips .timer-chip');
+    activeChips.forEach(chip => {
+        const chipMins = parseInt(chip.dataset.mins, 10);
+        if (chipMins === minutes) {
+            chip.classList.add('active');
+        } else {
+            chip.classList.remove('active');
+        }
+    });
 
     if (minutes <= 0) {
         // Süresiz
@@ -2498,8 +2538,10 @@ function initRoomRealtime(roomCode) {
 
             if (payload.timerEndTime && (!state.room.timerEndTime || payload.timerEndTime > state.room.timerEndTime)) {
                 state.room.timerEndTime = payload.timerEndTime;
-                state.room.timerMinutes = payload.timerMinutes || 10;
+                state.room.timerMinutes = payload.timerMinutes !== undefined ? payload.timerMinutes : Math.round((payload.timerEndTime - Date.now()) / 60000);
                 startRoomCountdown(payload.timerEndTime);
+            } else if (payload.timerMinutes !== undefined && state.room) {
+                state.room.timerMinutes = payload.timerMinutes;
             }
 
             renderActiveRoom();
