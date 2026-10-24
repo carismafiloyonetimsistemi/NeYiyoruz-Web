@@ -851,7 +851,7 @@ function renderActiveRoom() {
     els.currentRoomTitle.innerText = state.room.title;
     els.currentRoomCodeBadge.innerText = state.room.code;
     els.participantCount.innerText = state.room.participants.length;
-    els.menuCountBadge.innerText = state.foods.length;
+    if (els.menuCountBadge) els.menuCountBadge.innerText = state.foods.length;
 
     // Oda sayacını ve aktif çipi güncelle
     const roomMins = (state.room && state.room.timerMinutes !== undefined) ? state.room.timerMinutes : selectedTimerMinutes;
@@ -896,13 +896,19 @@ function renderActiveRoom() {
     els.activeRoomBox.scrollIntoView({ behavior: 'smooth' });
 }
 
-els.btnCreateRoom.addEventListener('click', () => {
-    createRoom(els.createRoomNameInput.value);
-});
+if (els.btnCreateRoom) {
+    els.btnCreateRoom.addEventListener('click', () => {
+        const title = els.createRoomNameInput ? els.createRoomNameInput.value : '';
+        createRoom(title);
+    });
+}
 
-els.btnJoinRoom.addEventListener('click', () => {
-    joinRoom(els.joinRoomCodeInput.value);
-});
+if (els.btnJoinRoom) {
+    els.btnJoinRoom.addEventListener('click', () => {
+        const code = els.joinRoomCodeInput ? els.joinRoomCodeInput.value : '';
+        joinRoom(code);
+    });
+}
 
 els.btnShareWhatsApp.addEventListener('click', () => {
     if (!state.room) return;
@@ -957,9 +963,11 @@ if (els.btnStartMatching) {
     });
 }
 
-els.btnBackToLobby.addEventListener('click', () => {
-    navigateTo('screen-lobby');
-});
+if (els.btnBackToLobby) {
+    els.btnBackToLobby.addEventListener('click', () => {
+        navigateTo('screen-lobby');
+    });
+}
 
 // --- 8. YEMEK & MUTFAK YÖNETİMİ ---
 const FOOD_CATEGORIES = [
@@ -1012,7 +1020,7 @@ function renderFoodManageList() {
         `;
     }).join('');
 
-    els.menuCountBadge.innerText = state.foods.length;
+    if (els.menuCountBadge) els.menuCountBadge.innerText = state.foods.length;
 }
 
 window.updateItemCategory = function(id, newCat) {
@@ -1073,19 +1081,25 @@ els.btnAddFoodItem.addEventListener('click', () => {
     alert(`"${name}" (${price}) listeye eklendi!`);
 });
 
-els.btnOpenMenuManager.addEventListener('click', () => {
-    renderFoodManageList();
-    els.menuManagerModal.classList.add('active');
-});
+if (els.btnOpenMenuManager) {
+    els.btnOpenMenuManager.addEventListener('click', () => {
+        renderFoodManageList();
+        if (els.menuManagerModal) els.menuManagerModal.classList.add('active');
+    });
+}
 
-els.btnOpenQuickAddModal.addEventListener('click', () => {
-    renderFoodManageList();
-    els.menuManagerModal.classList.add('active');
-});
+if (els.btnOpenQuickAddModal) {
+    els.btnOpenQuickAddModal.addEventListener('click', () => {
+        renderFoodManageList();
+        if (els.menuManagerModal) els.menuManagerModal.classList.add('active');
+    });
+}
 
-els.btnCloseMenuManager.addEventListener('click', () => {
-    els.menuManagerModal.classList.remove('active');
-});
+if (els.btnCloseMenuManager) {
+    els.btnCloseMenuManager.addEventListener('click', () => {
+        if (els.menuManagerModal) els.menuManagerModal.classList.remove('active');
+    });
+}
 
 
 // --- 8B. YEMEK SEÇİMİ & MENÜ SİSTEMİ (FOOD CATALOG & SELECTION) ---
@@ -1352,9 +1366,9 @@ function renderCurrentCard() {
     }
 
     const item = state.foods[state.currentCardIndex];
-    els.cardCounter.innerText = `${state.currentCardIndex + 1}/${state.foods.length}`;
+    if (els.cardCounter) els.cardCounter.innerText = `${state.currentCardIndex + 1}/${state.foods.length}`;
 
-    els.swipeCardWrapper.innerHTML = `
+    if (els.swipeCardWrapper) els.swipeCardWrapper.innerHTML = `
         <div class="food-card" id="activeFoodCard">
             <div class="food-card-header">
                 <span class="food-category-badge">${item.category}</span>
@@ -1493,9 +1507,9 @@ function setupCardDrag(card) {
     window.addEventListener('mouseup', onEnd);
 }
 
-els.btnSwipeLeft.addEventListener('click', () => handleSwipe('left'));
-els.btnSwipeRight.addEventListener('click', () => handleSwipe('right'));
-els.btnSuperLike.addEventListener('click', () => handleSwipe('super'));
+if (els.btnSwipeLeft) els.btnSwipeLeft.addEventListener('click', () => handleSwipe('left'));
+if (els.btnSwipeRight) els.btnSwipeRight.addEventListener('click', () => handleSwipe('right'));
+if (els.btnSuperLike) els.btnSuperLike.addEventListener('click', () => handleSwipe('super'));
 
 function triggerMatch(food) {
     state.winnerFood = food;
@@ -1577,10 +1591,12 @@ if (els.btnShowLikedChoices) {
     els.btnShowLikedChoices.addEventListener('click', openLikedChoicesModal);
 }
 
-els.btnSkipToWheel.addEventListener('click', () => {
-    state.winnerFood = state.acceptedFoods[0] || state.foods[0];
-    navigateTo('screen-wheel');
-});
+if (els.btnSkipToWheel) {
+    els.btnSkipToWheel.addEventListener('click', () => {
+        state.winnerFood = state.acceptedFoods[0] || state.foods[0];
+        navigateTo('screen-wheel');
+    });
+}
 
 // --- 10. RUNNER SELECTION: VOLUNTEER OR WHEEL ---
 function renderWheelParticipants() {
@@ -1671,7 +1687,7 @@ function getWheelItems() {
 
 function drawWheel() {
     const canvas = els.wheelCanvas;
-    if (!canvas) return;
+    if (!canvas || !canvas.getContext) return;
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
