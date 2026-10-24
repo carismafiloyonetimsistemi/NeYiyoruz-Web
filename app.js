@@ -1879,6 +1879,7 @@ function setupPlatesData() {
 }
 
 function renderPlatesUI() {
+    const currentUserName = (state.user && state.user.name && state.user.name.trim()) ? state.user.name.trim() : '';
     if (state.splitMode === 'individual') {
         els.individualPlatesContainer.style.display = 'flex';
         els.equalModeContainer.style.display = 'none';
@@ -1893,6 +1894,21 @@ function renderPlatesUI() {
             const personTotal = plate.items.reduce((sum, it) => sum + (parseFloat(it.price) || 0), 0);
             plate.price = personTotal;
             grandTotal += personTotal;
+
+            const isMyPlate = Boolean(currentUserName && plate.person.trim().toLowerCase() === currentUserName.toLowerCase());
+            let copyBtnText = '🤝 Bana da Aynısından!';
+            let copyBtnTitle = `"${plate.person}" ile aynı siparişi kendi tabağına kopyala`;
+            let copyBtnIcon = 'fa-handshake';
+
+            if (isMyPlate) {
+                copyBtnText = '👥 +1 Arkadaşıma Aynısından';
+                copyBtnTitle = 'Bu siparişin aynısını başka bir arkadaşın için ekle';
+                copyBtnIcon = 'fa-user-plus';
+            } else if (!currentUserName) {
+                copyBtnText = '🤝 Aynısından İsterim';
+                copyBtnTitle = 'Bu siparişin aynısını bir kişi için ekle';
+                copyBtnIcon = 'fa-user-plus';
+            }
 
             return `
             <div class="individual-plate-item" data-plate-index="${index}">
@@ -1973,8 +1989,8 @@ function renderPlatesUI() {
                     <button type="button" class="btn btn-sm btn-outline flex-1" onclick="openMenuForPerson(${index})" title="Geniş menü kataloğunu aç">
                         <i class="fa-solid fa-utensils"></i> 📖 Menüden Yemek Seç
                     </button>
-                    <button type="button" class="btn-copy-same-plate flex-1" onclick="clonePlateForAnotherPerson(${index})" title="Bu siparişin aynısını başka biri için de ekler">
-                        <i class="fa-solid fa-user-plus"></i> 🤝 Aynısından İsterim
+                    <button type="button" class="btn-copy-same-plate flex-1" onclick="clonePlateForAnotherPerson(${index})" title="${copyBtnTitle}">
+                        <i class="fa-solid ${copyBtnIcon}"></i> ${copyBtnText}
                     </button>
                 </div>
 
@@ -2650,44 +2666,90 @@ document.addEventListener('DOMContentLoaded', setupTimerPresetListeners);
 setupTimerPresetListeners();
 
 
-// --- AYNISINDAN İSTERİM (+1 KİŞİ / SİPARİŞE KATIL) & HIZLI ÜRÜN EKLE ---
+// --- GLOBAL TOAST BİLDİRİMİ ---
+window.showAppToast = function(message, type = 'success') {
+    let container = document.getElementById('appToastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'appToastContainer';
+        container.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:999999;display:flex;flex-direction:column;gap:10px;pointer-events:none;width:90%;max-width:440px;';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    const bg = type === 'error' ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : (type === 'info' ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' : 'linear-gradient(135deg, #10b981, #059669)');
+    toast.style.cssText = `background:${bg};color:#ffffff;padding:12px 18px;border-radius:12px;box-shadow:0 10px 25px -5px rgba(0,0,0,0.4), 0 0 15px rgba(255,255,255,0.15);font-size:14px;font-weight:600;text-align:center;opacity:0;transform:translateY(-15px) scale(0.95);transition:all 0.3s cubic-bezier(0.16, 1, 0.3, 1);pointer-events:auto;border:1px solid rgba(255,255,255,0.2);`;
+    toast.innerHTML = message;
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0) scale(1)';
+    });
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-15px) scale(0.95)';
+        setTimeout(() => {
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 320);
+    }, 4000);
+};
+
+// --- AYNISINDAN İSTERİM (GİRİŞ YAPMIŞSA SORMADAN KOPYALA, MİSAFİR YA DA KENDİ TABAĞIYSA SOR) ---
 window.clonePlateForAnotherPerson = function(sourceIndex) {
     const sourcePlate = state.plates[sourceIndex];
     if (!sourcePlate || !sourcePlate.items || sourcePlate.items.length === 0) {
-        alert('Kopyalanacak bir ürün bulunamadı.');
+        window.showAppToast('⚠️ Bu tabakta henüz bir yemek bulunmuyor.', 'info');
         return;
     }
 
-    const friendName = prompt(`"${sourcePlate.person}" ile aynı siparişi verecek kişinin adı nedir?\n(Örn: Ahmet, Can, Zeynep)`);
-    if (!friendName || !friendName.trim()) return;
+    const currentUserName = (state.user && state.user.name && state.user.name.trim()) ? state.user.name.trim() : '';
+    const isSourceMine = Boolean(currentUserName && sourcePlate.person.trim().toLowerCase() === currentUserName.toLowerCase());
 
-    const cleanName = friendName.trim();
+    let targetPersonName = '';
+
+    if (currentUserName && !isSourceMine) {
+        // Giriş yapmış kullanıcı başka birinin tabağında "Bana da Aynısından" butonuna tıkladı:
+        // Kesinlikle soru sorma, doğrudan giriş yapan kişinin tabağına aktar!
+        targetPersonName = currentUserName;
+    } else if (currentUserName && isSourceMine) {
+        // Kullanıcı kendi tabağında "+1 Arkadaşıma Aynısından" butonuna tıkladı
+        const friendName = prompt('Kendi siparişinizin aynısını hangi arkadaşınız için eklemek istiyorsunuz?\n(Örn: Ahmet, Ayşe, Mehmet)');
+        if (!friendName || !friendName.trim()) return;
+        targetPersonName = friendName.trim();
+    } else {
+        // Giriş yapılmamış (misafir modda)
+        const friendName = prompt(`"${sourcePlate.person}" ile aynı siparişi verecek kişinin adı nedir?\n(Örn: Ahmet, Ayşe, Can)`);
+        if (!friendName || !friendName.trim()) return;
+        targetPersonName = friendName.trim();
+    }
 
     // Odaya dahil değilse ekle
     if (!state.room) {
         state.room = { code: '1001', title: 'Yemek Grubu', participants: [sourcePlate.person] };
     }
-    if (!state.room.participants.includes(cleanName)) {
-        state.room.participants.push(cleanName);
+    if (!state.room.participants.some(p => p.toLowerCase() === targetPersonName.toLowerCase())) {
+        state.room.participants.push(targetPersonName);
     }
 
     // Aynı ürünleri klonla
     const clonedItems = sourcePlate.items.map((it, idx) => ({
-        id: 'it_clone_' + Date.now() + '_' + idx,
+        id: 'it_clone_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).substring(2, 6),
         name: it.name,
         qty: it.qty || 1,
-        unitPrice: it.unitPrice || it.price,
-        price: it.price || ((it.qty || 1) * (it.unitPrice || it.price)),
+        unitPrice: it.unitPrice !== undefined ? it.unitPrice : it.price,
+        price: it.price !== undefined ? it.price : ((it.qty || 1) * (it.unitPrice || it.price)),
         emoji: it.emoji || '🍽️',
         type: it.type || 'food'
     }));
 
-    let targetPlate = state.plates.find(p => p.person.toLowerCase() === cleanName.toLowerCase());
+    let targetPlate = state.plates.find(p => p.person.trim().toLowerCase() === targetPersonName.toLowerCase());
     if (targetPlate) {
         targetPlate.items = clonedItems;
     } else {
         state.plates.push({
-            person: cleanName,
+            person: targetPersonName,
             isRunner: false,
             paid: false,
             items: clonedItems
@@ -2697,16 +2759,25 @@ window.clonePlateForAnotherPerson = function(sourceIndex) {
     audio.init();
     audio.fanfare();
     if (window.confetti) {
-        confetti({ particleCount: 70, spread: 60, origin: { y: 0.7 } });
+        confetti({ particleCount: 75, spread: 70, origin: { y: 0.65 } });
     }
 
     renderPlatesUI();
     renderActiveRoom();
+    renderWheelParticipants();
     populateVolunteerSelect();
     drawWheel();
     broadcastPlatesChange();
+    if (typeof broadcastRoomState === 'function') {
+        broadcastRoomState();
+    }
 
-    alert(`🎉 ${cleanName} aramıza katıldı ve "${sourcePlate.person}" ile aynı siparişi (${sourcePlate.items.map(i => (i.qty > 1 ? i.qty + 'x ' : '') + i.name).join(', ')}) tabağına eklendi!`);
+    const foodSummary = sourcePlate.items.map(i => (i.qty > 1 ? i.qty + 'x ' : '') + i.name).join(', ');
+    if (currentUserName && targetPersonName.toLowerCase() === currentUserName.toLowerCase()) {
+        window.showAppToast(`🎉 Harika! <strong>"${sourcePlate.person}"</strong> ile aynı sipariş (<em>${foodSummary}</em>) tabağınıza eklendi!`, 'success');
+    } else {
+        window.showAppToast(`🎉 <strong>${targetPersonName}</strong> için "${sourcePlate.person}" ile aynı sipariş (<em>${foodSummary}</em>) eklendi!`, 'success');
+    }
 };
 
 window.promptAddItemToPlate = function(personIndex) {
