@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ne Yiyoruz? - Arkadaş Grubu Yemek Karar & Çarkıfelek Uygulaması</title>
+    <meta name="description" content="Bugün ne yesek derdine son! Arkadaşlarınla oda kur, yemekleri oyla, swipe yap ve çarkıfelekle siparişi kimin vereceğini belirle.">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Ne Yiyoruz?">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Icons & Confetti -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background Gradient Glows -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <div class="app-container">
+        <!-- Top App Bar -->
+        <header class="app-header">
+            <div class="logo-box">
+                <span class="logo-icon">🍕</span>
+                <span class="logo-text">Ne Yiyoruz<span class="text-orange">?</span></span>
+            </div>
+            <div class="user-badge" id="userBadge" style="display: none;">
+                <span class="avatar-circle" id="userAvatar">😎</span>
+                <span class="user-name" id="displayUsername">Misafir</span>
+                <button class="icon-btn-sm" id="logoutBtn" title="Çıkış Yap">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN SCREENS CONTAINER -->
+        <main class="screens-viewport">
+            
+            <!-- 1. AUTH / ENTRY SCREEN -->
+            <section id="screen-auth" class="screen active">
+                <div class="auth-hero">
+                    <div class="hero-badge">🚀 Karar Vermek Artık Çok Kolay</div>
+                    <h1 class="hero-title">Bugün Ne Yiyoruz Tartışmasına <span class="text-gradient">Son Ver!</span></h1>
+                    <p class="hero-desc">Arkadaş grubunla oda kur, yemekleri Tinder gibi kaydırarak oyla, çarkıfelekle siparişçiyi seç!</p>
+                </div>
+
+                <div class="glass-card auth-card">
+                    <div class="guest-box">
+                        <div class="section-tag"><i class="fa-solid fa-bolt"></i> En Hızlı Yol</div>
+                        <h3>Misafir Olarak Hemen Başla</h3>
+                        <p class="small-text">Kayıt olmadan, şifresiz 2 saniyede katıl</p>
+                        
+                        <div class="input-group">
+                            <i class="fa-solid fa-user input-icon"></i>
+                            <input type="text" id="guestNameInput" placeholder="Adını veya Lakabını Yaz..." maxlength="20">
+                        </div>
+                        
+                        <button class="btn btn-primary btn-block btn-pulse" id="btnGuestStart">
+                            <i class="fa-solid fa-play"></i> Hızlı Başla
+                        </button>
+                    </div>
+
+                    <div class="divider">
+                        <span>VEYA HESAPLA GİRİŞ</span>
+                    </div>
+
+                    <div class="account-actions">
+                        <button class="btn btn-outline btn-block" id="btnShowLogin">
+                            <i class="fa-solid fa-envelope"></i> E-Posta ile Giriş / Kayıt
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. LOBBY SCREEN (Oda Kur / Katıl) -->
+            <section id="screen-lobby" class="screen">
+                <div class="lobby-header">
+                    <h2>Oda Yönetimi</h2>
+                    <p class="sub-desc">Yeni bir oylama başlat veya arkadaşının odasına katıl.</p>
+                </div>
+
+                <div class="grid-cards">
+                    <!-- Create Room Card -->
+                    <div class="glass-card action-card">
+                        <div class="card-icon bg-orange-glow">
+                            <i class="fa-solid fa-plus"></i>
+                        </div>
+                        <h3>Yeni Oda Oluştur</h3>
+                        <p>Odayı sen kur, linki WhatsApp'tan arkadaşlarına gönder.</p>
+                        <div class="input-group mt-3">
+                            <i class="fa-solid fa-utensils input-icon"></i>
+                            <input type="text" id="createRoomNameInput" placeholder="Oda Adı (Örn: Ofis Ekibi, Pazar Yemeği)">
+                        </div>
+                        <button class="btn btn-primary btn-block mt-3" id="btnCreateRoom">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Odayı Kur & Başlat
+                        </button>
+                    </div>
+
+                    <!-- Join Room Card -->
+                    <div class="glass-card action-card">
+                        <div class="card-icon bg-blue-glow">
+                            <i class="fa-solid fa-door-open"></i>
+                        </div>
+                        <h3>Odaya Katıl</h3>
+                        <p>Arkadaşının paylaştığı 4 veya 6 haneli oda kodunu gir.</p>
+                        <div class="input-group mt-3">
+                            <i class="fa-solid fa-hashtag input-icon"></i>
+                            <input type="text" id="joinRoomCodeInput" placeholder="Oda Kodu (Örn: 4821)" maxlength="6">
+                        </div>
+                        <button class="btn btn-outline btn-block mt-3" id="btnJoinRoom">
+                            <i class="fa-solid fa-right-to-bracket"></i> Odaya Gir
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Room Active State (Inside Room) -->
+                <div id="activeRoomBox" class="glass-card active-room-card mt-4" style="display: none;">
+                    <div class="room-banner">
+                        <div>
+                            <span class="room-pill">CANLI ODA</span>
+                            <h3 id="currentRoomTitle">Ofis Ekibi</h3>
+                            <span class="room-code-tag">Kod: <strong id="currentRoomCodeBadge">4821</strong></span>
+                        </div>
+                        <button class="btn btn-sm btn-whatsapp" id="btnShareWhatsApp">
+                            <i class="fa-brands fa-whatsapp"></i> WhatsApp'ta Davet Et
+                        </button>
+                    </div>
+
+                    <div class="participants-box">
+                        <div class="box-title">
+                            <span><i class="fa-solid fa-users"></i> Odadakiler (<span id="participantCount">1</span>)</span>
+                            <span class="live-dot">● Canlı</span>
+                        </div>
+                        <div class="participants-chips" id="participantsList">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+
+                    <div class="lobby-controls">
+                        <button class="btn btn-primary btn-lg btn-block" id="btnStartMatching">
+                            <i class="fa-solid fa-fire"></i> Yemek Eşleşmesini (Swipe) Başlat
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. FOOD MATCH SCREEN (Tinder Swipe) -->
+            <section id="screen-match" class="screen">
+                <div class="match-topbar">
+                    <button class="icon-btn" id="btnBackToLobby"><i class="fa-solid fa-chevron-left"></i></button>
+                    <div class="match-info">
+                        <h3>Yemek Eşleşmesi</h3>
+                        <p>Beğendiğini sağa, istemediğini sola kaydır</p>
+                    </div>
+                    <div class="card-counter" id="cardCounter">1/10</div>
+                </div>
+
+                <!-- Swipe Deck Container -->
+                <div class="swipe-deck-container">
+                    <div class="swipe-card-wrapper" id="swipeCardWrapper">
+                        <!-- Dynamic Swipe Card Rendered via JS -->
+                    </div>
+                </div>
+
+                <!-- Swipe Action Controls -->
+                <div class="swipe-actions">
+                    <button class="action-circle btn-reject" id="btnSwipeLeft" title="Yemem">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <button class="action-circle btn-superlike" id="btnSuperLike" title="Çok İsterim!">
+                        <i class="fa-solid fa-star"></i>
+                    </button>
+                    <button class="action-circle btn-accept" id="btnSwipeRight" title="Yerim">
+                        <i class="fa-solid fa-heart"></i>
+                    </button>
+                </div>
+
+                <div class="finish-vote-bar">
+                    <button class="btn btn-ghost" id="btnSkipToWheel">
+                        <i class="fa-solid fa-dharmachakra"></i> Doğrudan Çarkıfeleğe Geç
+                    </button>
+                </div>
+            </section>
+
+            <!-- 4. WHEEL OF FORTUNE (RUNNER SEÇİMİ) -->
+            <section id="screen-wheel" class="screen">
+                <div class="wheel-header text-center">
+                    <span class="badge-amber">🏃 KURA & SİPARİŞÇİ BELİRLEME</span>
+                    <h2>Siparişi Kim Verecek?</h2>
+                    <p>Çarkı çevir, bugün yemeği alma veya siparişi verme görevlisini seç!</p>
+                </div>
+
+                <!-- Interactive Wheel Container -->
+                <div class="wheel-stage">
+                    <div class="wheel-pointer">▼</div>
+                    <canvas id="wheelCanvas" width="340" height="340"></canvas>
+                </div>
+
+                <div class="wheel-controls">
+                    <button class="btn btn-primary btn-lg btn-block btn-spin" id="btnSpinWheel">
+                        <i class="fa-solid fa-rotate"></i> ÇARKI ÇEVİR!
+                    </button>
+                </div>
+
+                <!-- Runner Announcement Modal / Box -->
+                <div id="runnerResultBox" class="glass-card runner-winner-card mt-3" style="display: none;">
+                    <div class="runner-trophy">🎉</div>
+                    <h3>Günün Siparişçisi: <span id="runnerName" class="text-orange">Ahmet</span>!</h3>
+                    <p>Görevin: Siparişi uygulamadan vermek ve teslim almak. Afiyet olsun!</p>
+                    <button class="btn btn-success btn-block mt-3" id="btnProceedToOrder">
+                        <i class="fa-solid fa-basket-shopping"></i> Kazanan Yemek & Sipariş Ekranı
+                    </button>
+                </div>
+            </section>
+
+            <!-- 5. RESULT & AFFILIATE ORDER SCREEN -->
+            <section id="screen-result" class="screen">
+                <div class="result-header text-center">
+                    <span class="badge-green">🏆 BUGÜNKÜ MENÜ SEÇİLDİ</span>
+                    <h2 id="finalFoodTitle">Nefis Karışık Pizza</h2>
+                    <p>Oylama sonuçlandı! Siparişini hemen en popüler platformlardan ver:</p>
+                </div>
+
+                <!-- Winner Food Spotlight Card -->
+                <div class="glass-card winner-spotlight">
+                    <div class="winner-img-box" id="winnerFoodEmoji">🍕</div>
+                    <div class="winner-details">
+                        <h3 id="winnerFoodName">Büyük Boy İtalyan Pizza</h3>
+                        <p class="winner-tag">🔥 Grupta En Çok Oyu Alan Lezzet</p>
+                        <div class="runner-badge-pill">
+                            <i class="fa-solid fa-person-running"></i> Siparişi Veren: <strong id="summaryRunnerName">Ersoy</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROMO / COUPON BOX -->
+                <div class="promo-box">
+                    <div class="promo-left">
+                        <i class="fa-solid fa-ticket promo-icon"></i>
+                        <div>
+                            <span class="promo-title">Özel Grup İndirimi</span>
+                            <span class="promo-sub">Siparişte %20 İndirim Kodu</span>
+                        </div>
+                    </div>
+                    <button class="btn-copy-code" id="btnCopyPromo" data-code="NEYIYORUZ20">
+                        <span id="promoCodeText">NEYIYORUZ20</span>
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>
+
+                <!-- AFFILIATE DIRECT ORDER BUTTONS -->
+                <div class="affiliate-section">
+                    <h4 class="section-title"><i class="fa-solid fa-motorcycle"></i> Hızlı Sipariş Ver (Affiliate İndirimli)</h4>
+                    
+                    <a href="https://www.yemeksepeti.com" target="_blank" class="affiliate-btn btn-yemeksepeti" id="linkYemeksepeti">
+                        <div class="aff-left">
+                            <span class="aff-logo">🔴</span>
+                            <div class="aff-text">
+                                <strong>Yemeksepeti</strong>
+                                <span>En yakın restoranları ara & sipariş et</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+
+                    <a href="https://www.trendyol.com/yemek" target="_blank" class="affiliate-btn btn-trendyol" id="linkTrendyol">
+                        <div class="aff-left">
+                            <span class="aff-logo">🟠</span>
+                            <div class="aff-text">
+                                <strong>Trendyol Yemek</strong>
+                                <span>%50'ye varan kuponlarla sipariş et</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+
+                    <a href="https://getir.com/yemek" target="_blank" class="affiliate-btn btn-getir" id="linkGetir">
+                        <div class="aff-left">
+                            <span class="aff-logo">🟣</span>
+                            <div class="aff-text">
+                                <strong>GetirYemek</strong>
+                                <span>30 dakikada sıcak kapında</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+                </div>
+
+                <!-- RESET / NEW VOTE -->
+                <div class="mt-4 text-center">
+                    <button class="btn btn-outline" id="btnNewRound">
+                        <i class="fa-solid fa-arrows-rotate"></i> Yeni Bir Oylama Başlat
+                    </button>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- STICKY BOTTOM AD BANNER -->
+        <footer class="sticky-banner" id="stickyBanner">
+            <div class="banner-inner">
+                <div class="banner-badge">SPONSOR</div>
+                <div class="banner-content">
+                    <strong>NeYiyoruz PRO ile Reklamsız Sürüm Çok Yakında!</strong>
+                    <span>İlk siparişe özel %30 indirim kodu kupon alanında.</span>
+                </div>
+                <button class="banner-close-btn" id="btnCloseBanner">&times;</button>
+            </div>
+        </footer>
+
+        <!-- BOTTOM NAVIGATION TABS -->
+        <nav class="bottom-nav">
+            <button class="nav-tab active" data-target="screen-auth" id="tabAuth">
+                <i class="fa-solid fa-user"></i>
+                <span>Giriş</span>
+            </button>
+            <button class="nav-tab" data-target="screen-lobby" id="tabLobby">
+                <i class="fa-solid fa-users"></i>
+                <span>Oda</span>
+            </button>
+            <button class="nav-tab" data-target="screen-match" id="tabMatch">
+                <i class="fa-solid fa-fire"></i>
+                <span>Eşleşme</span>
+            </button>
+            <button class="nav-tab" data-target="screen-wheel" id="tabWheel">
+                <i class="fa-solid fa-dharmachakra"></i>
+                <span>Çarkıfelek</span>
+            </button>
+            <button class="nav-tab" data-target="screen-result" id="tabResult">
+                <i class="fa-solid fa-trophy"></i>
+                <span>Sonuç</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Match Celebration Modal -->
+    <div class="modal" id="matchModal">
+        <div class="modal-card">
+            <div class="modal-emoji">🎉🍔🍕</div>
+            <h2>EŞLEŞME YAKALANDI!</h2>
+            <p>Gruptaki herkes bu lezzete bayıldı:</p>
+            <div class="matched-food-box" id="modalMatchedFoodName">Lahmacun & Ayran</div>
+            <p class="modal-subtext">Şimdi sıra siparişi kimin vereceğinde!</p>
+            <button class="btn btn-primary btn-block btn-pulse" id="btnModalGoToWheel">
+                <i class="fa-solid fa-dharmachakra"></i> Çarkıfeleğe Git & Siparişçiyi Seç
+            </button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
