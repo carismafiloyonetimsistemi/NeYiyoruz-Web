@@ -1073,12 +1073,36 @@ body {
     outline: none;
     margin-bottom: 8px;
 }
+.compact-select {
+    padding: 10px 12px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    color: white;
+    font-size: 13px;
+    outline: none;
+    margin-bottom: 8px;
+    cursor: pointer;
+}
+.compact-select:focus { border-color: var(--primary); }
+.manage-select {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    color: #cbd5e1;
+    font-size: 11px;
+    padding: 4px 6px;
+    outline: none;
+    cursor: pointer;
+}
+.manage-select:focus { border-color: var(--primary); }
 .form-row {
     display: flex;
     gap: 8px;
 }
 .flex-1 { flex: 1; }
 .w-20 { width: 80px; }
+.w-36 { width: 140px; }
 .text-center { text-align: center; }
 
 .food-items-manage-list {
@@ -1095,15 +1119,24 @@ body {
     background: rgba(255, 255, 255, 0.04);
     padding: 8px 12px;
     border-radius: 10px;
+    gap: 8px;
 }
 .food-manage-left {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex: 1;
 }
 .food-manage-emoji { font-size: 22px; }
-.food-manage-item strong { font-size: 14px; display: block; }
-.food-manage-item span { font-size: 11px; color: var(--text-muted); }
+.food-manage-info {
+    flex: 1;
+}
+.food-manage-info strong { font-size: 13px; display: block; margin-bottom: 4px; }
+.food-manage-selects {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
 .btn-delete-food {
     background: none;
     border: none;
@@ -1114,3 +1147,4 @@ body {
     opacity: 0.8;
 }
 .btn-delete-food:hover { opacity: 1; }
+

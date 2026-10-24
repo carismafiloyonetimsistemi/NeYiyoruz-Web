@@ -174,8 +174,8 @@ const els = {
     menuManagerModal: document.getElementById('menuManagerModal'),
     btnCloseMenuManager: document.getElementById('btnCloseMenuManager'),
     newFoodNameInput: document.getElementById('newFoodNameInput'),
-    newFoodCategoryInput: document.getElementById('newFoodCategoryInput'),
-    newFoodEmojiInput: document.getElementById('newFoodEmojiInput'),
+    newFoodCategorySelect: document.getElementById('newFoodCategorySelect'),
+    newFoodPriceSelect: document.getElementById('newFoodPriceSelect'),
     btnAddFoodItem: document.getElementById('btnAddFoodItem'),
     foodItemsManageList: document.getElementById('foodItemsManageList'),
     navTabs: document.querySelectorAll('.nav-tab'),
@@ -316,14 +316,39 @@ els.btnBackToLobby.addEventListener('click', () => {
 });
 
 // --- 8. YEMEK & MUTFAK YÖNETİMİ ---
+const FOOD_CATEGORIES = [
+    { name: 'Kebap & Ocakbaşı', emoji: '🍢' },
+    { name: 'Pizza & İtalyan', emoji: '🍕' },
+    { name: 'Burger & Fast Food', emoji: '🍔' },
+    { name: 'Döner & Sokak Lezzeti', emoji: '🌯' },
+    { name: 'Ev Yemekleri & Çorba', emoji: '🍲' },
+    { name: 'Pide & Taş Fırın', emoji: '🥩' },
+    { name: 'Sushi & Uzak Doğu', emoji: '🍣' },
+    { name: 'Çiğ Köfte & Dürüm', emoji: '🥬' },
+    { name: 'Tavuk & Bistro', emoji: '🍗' },
+    { name: 'Tatlı & Kafe', emoji: '🍫' },
+    { name: 'Sandviç & Kahvaltı', emoji: '🥪' },
+    { name: 'Salata & Sağlıklı', emoji: '🥗' },
+    { name: 'Diğer Lezzetler', emoji: '🍽️' },
+];
+
+const PRICE_TIERS = ['100 ₺', '120 ₺', '160 ₺', '200 ₺', '250 ₺', '320 ₺', '400 ₺', '500 ₺'];
+
 function renderFoodManageList() {
     els.foodItemsManageList.innerHTML = state.foods.map(item => `
         <div class="food-manage-item">
             <div class="food-manage-left">
                 <span class="food-manage-emoji">${item.emoji}</span>
-                <div>
+                <div class="food-manage-info">
                     <strong>${item.name}</strong>
-                    <span>${item.category} • ${item.price}</span>
+                    <div class="food-manage-selects">
+                        <select class="manage-select" onchange="updateItemCategory(${item.id}, this.value)">
+                            ${FOOD_CATEGORIES.map(c => `<option value="${c.name}" ${item.category === c.name ? 'selected' : ''}>${c.emoji} ${c.name}</option>`).join('')}
+                        </select>
+                        <select class="manage-select" onchange="updateItemPrice(${item.id}, this.value)">
+                            ${PRICE_TIERS.map(p => `<option value="${p}" ${item.price === p ? 'selected' : ''}>${p}</option>`).join('')}
+                        </select>
+                    </div>
                 </div>
             </div>
             <button class="btn-delete-food" onclick="deleteFoodItem(${item.id})" title="Menüden Çıkar">
@@ -334,6 +359,25 @@ function renderFoodManageList() {
 
     els.menuCountBadge.innerText = state.foods.length;
 }
+
+window.updateItemCategory = function(id, newCat) {
+    const item = state.foods.find(f => f.id === id);
+    if (item) {
+        item.category = newCat;
+        const matched = FOOD_CATEGORIES.find(c => c.name === newCat);
+        if (matched) item.emoji = matched.emoji;
+        localStorage.setItem('neyiyoruz_custom_foods', JSON.stringify(state.foods));
+        renderFoodManageList();
+    }
+};
+
+window.updateItemPrice = function(id, newPrice) {
+    const item = state.foods.find(f => f.id === id);
+    if (item) {
+        item.price = newPrice;
+        localStorage.setItem('neyiyoruz_custom_foods', JSON.stringify(state.foods));
+    }
+};
 
 window.deleteFoodItem = function(id) {
     if (state.foods.length <= 2) {
@@ -347,29 +391,29 @@ window.deleteFoodItem = function(id) {
 
 els.btnAddFoodItem.addEventListener('click', () => {
     const name = els.newFoodNameInput.value.trim();
-    const category = els.newFoodCategoryInput.value.trim() || 'Özel Restoran';
-    const emoji = els.newFoodEmojiInput.value.trim() || '🍽️';
+    const category = els.newFoodCategorySelect.value;
+    const price = els.newFoodPriceSelect.value;
+    
+    const matchedCategory = FOOD_CATEGORIES.find(c => c.name === category);
+    const emoji = matchedCategory ? matchedCategory.emoji : '🍽️';
 
-    if (!name) return alert('Lütfen restoran/yemek adını yazınız.');
+    if (!name) return alert('Lütfen restoran veya yemek adını yazınız.');
 
     const newFood = {
         id: Date.now(),
         name: name,
         category: category,
         emoji: emoji,
-        price: '220 ₺',
-        desc: 'Grup tarafından özel eklenen seçenek'
+        price: price,
+        desc: `${category} kategorisinde özel seçim`
     };
 
     state.foods.unshift(newFood);
     localStorage.setItem('neyiyoruz_custom_foods', JSON.stringify(state.foods));
 
     els.newFoodNameInput.value = '';
-    els.newFoodCategoryInput.value = '';
-    els.newFoodEmojiInput.value = '';
-
     renderFoodManageList();
-    alert(`"${name}" listeye eklendi!`);
+    alert(`"${name}" (${price}) listeye eklendi!`);
 });
 
 els.btnOpenMenuManager.addEventListener('click', () => {

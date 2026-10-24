@@ -460,10 +460,33 @@
 
             <!-- Yemek Ekle Formu -->
             <div class="add-food-form">
-                <input type="text" id="newFoodNameInput" class="compact-input" placeholder="Yemek / Restoran Adı (Örn: Çökertme Kebabı)">
+                <input type="text" id="newFoodNameInput" class="compact-input" placeholder="Yemek veya Restoran Adı (Örn: Çökertme Kebabı)">
                 <div class="form-row">
-                    <input type="text" id="newFoodCategoryInput" class="compact-input flex-1" placeholder="Kategori (Örn: Kebap)">
-                    <input type="text" id="newFoodEmojiInput" class="compact-input w-20 text-center" placeholder="Emoji 🍲" maxlength="2">
+                    <select id="newFoodCategorySelect" class="compact-select flex-1">
+                        <option value="Kebap & Ocakbaşı" data-emoji="🍢">🍢 Kebap & Ocakbaşı</option>
+                        <option value="Pizza & İtalyan" data-emoji="🍕">🍕 Pizza & İtalyan</option>
+                        <option value="Burger & Fast Food" data-emoji="🍔">🍔 Burger & Fast Food</option>
+                        <option value="Döner & Sokak Lezzeti" data-emoji="🌯">🌯 Döner & Sokak Lezzeti</option>
+                        <option value="Ev Yemekleri & Çorba" data-emoji="🍲">🍲 Ev Yemekleri & Çorba</option>
+                        <option value="Pide & Taş Fırın" data-emoji="🥩">🥩 Pide & Taş Fırın</option>
+                        <option value="Sushi & Uzak Doğu" data-emoji="🍣">🍣 Sushi & Uzak Doğu</option>
+                        <option value="Çiğ Köfte & Dürüm" data-emoji="🥬">🥬 Çiğ Köfte & Dürüm</option>
+                        <option value="Tavuk & Bistro" data-emoji="🍗">🍗 Tavuk & Bistro</option>
+                        <option value="Tatlı & Kafe" data-emoji="🍫">🍫 Tatlı & Kafe</option>
+                        <option value="Sandviç & Kahvaltı" data-emoji="🥪">🥪 Sandviç & Kahvaltı</option>
+                        <option value="Salata & Sağlıklı" data-emoji="🥗">🥗 Salata & Sağlıklı</option>
+                        <option value="Diğer Lezzetler" data-emoji="🍽️">🍽️ Diğer Lezzetler</option>
+                    </select>
+
+                    <select id="newFoodPriceSelect" class="compact-select w-36">
+                        <option value="120 ₺">120 ₺ (Ekonomik)</option>
+                        <option value="160 ₺">160 ₺ (Hafif Menü)</option>
+                        <option value="200 ₺">200 ₺ (Standart)</option>
+                        <option value="250 ₺" selected>250 ₺ (Doyurucu)</option>
+                        <option value="320 ₺">320 ₺ (Porsiyon/Et)</option>
+                        <option value="400 ₺">400 ₺ (Ziyafet)</option>
+                        <option value="500 ₺">500 ₺ (Özel Menü)</option>
+                    </select>
                 </div>
                 <button class="btn btn-primary btn-block btn-sm mt-2" id="btnAddFoodItem">
                     <i class="fa-solid fa-plus"></i> Listeye Ekle
