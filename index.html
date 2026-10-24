@@ -234,7 +234,7 @@
 
                 <!-- Yemek Listesinden Sonra: Sade Yemek Ekle Butonu -->
                 <div class="custom-dish-banner mt-3 mb-4 text-center">
-                    <button type="button" class="btn btn-outline btn-block custom-dish-btn" id="btnOpenCustomDishPrompt">
+                    <button type="button" class="btn btn-outline btn-block custom-dish-btn" id="btnOpenCustomDishPrompt" onclick="openAddFoodModal()">
                         <i class="fa-solid fa-plus-circle text-orange"></i> + Yemek Ekle
                     </button>
                 </div>
@@ -580,6 +580,66 @@
             <div class="food-items-manage-list" id="foodItemsManageList">
                 <!-- Injected via JS -->
             </div>
+        </div>
+    </div>
+
+        <!-- MODAL: Yeni Yemek Ekleme Modalı (Yemek Adı, Kategori, Fiyat) -->
+    <div class="modal" id="modalAddNewFood">
+        <div class="modal-card">
+            <div class="modal-header-row">
+                <div class="auth-modal-title">
+                    <span class="auth-icon-badge">🍽️</span>
+                    <h3>Yeni Yemek Ekle</h3>
+                </div>
+                <button class="btn-close-modal" id="btnCloseAddNewFoodModal" type="button" onclick="closeAddFoodModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <p class="small-text text-muted mb-3">Yemek adını, kategorisini ve fiyatını girerek menüye ekleyin:</p>
+
+            <form id="formAddNewFood" onsubmit="handleAddNewFoodSubmit(event);">
+                <!-- Yemek Adı -->
+                <div class="input-group-auth mb-3">
+                    <label for="customFoodNameInput"><i class="fa-solid fa-utensils"></i> Yemek veya İçecek Adı</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-pen input-icon"></i>
+                        <input type="text" id="customFoodNameInput" placeholder="Örn: Çökertme Kebabı, Beyti, Künefe" required maxlength="40" autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- Kategori Seçimi -->
+                <div class="input-group-auth mb-3">
+                    <label for="customFoodCategorySelect"><i class="fa-solid fa-layer-group"></i> Kategori</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-tag input-icon"></i>
+                        <select id="customFoodCategorySelect" class="custom-select" style="width: 100%; padding: 10px 12px 10px 36px; border-radius: 10px; font-weight: 600;">
+                            <option value="Kebap & Köfte" data-emoji="🍢">🍢 Kebap & Köfte</option>
+                            <option value="Lahmacun & Pide" data-emoji="🍕">🍕 Lahmacun & Pide</option>
+                            <option value="Döner & Dürüm" data-emoji="🌯">🌯 Döner & Dürüm</option>
+                            <option value="Burger & Pizza" data-emoji="🍔">🍔 Burger & Pizza</option>
+                            <option value="Çorba & Ev Yemeği" data-emoji="🍲">🍲 Çorba & Ev Yemeği</option>
+                            <option value="Yan Lezzetler" data-emoji="🍟">🍟 Yan Lezzetler</option>
+                            <option value="İçecekler" data-emoji="🥤">🥤 İçecekler</option>
+                            <option value="Tatlılar" data-emoji="🍰">🍰 Tatlılar</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Fiyat -->
+                <div class="input-group-auth mb-4">
+                    <label for="customFoodPriceInput"><i class="fa-solid fa-turkish-lira-sign"></i> Fiyat (₺)</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-coins input-icon"></i>
+                        <input type="number" id="customFoodPriceInput" placeholder="Fiyat (Örn: 220)" min="0" step="5" required value="200">
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnSubmitNewFood">
+                    <i class="fa-solid fa-plus-circle"></i> Yemeği Ekle
+                </button>
+            </form>
         </div>
     </div>
 

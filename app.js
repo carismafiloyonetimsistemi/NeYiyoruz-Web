@@ -3304,3 +3304,99 @@ if (btnTopCustom) {
         updateMenuStickyCartBar();
     });
 }
+
+// --- YENİ YEMEK EKLEME MODALI FONKSİYONLARI ---
+window.openAddFoodModal = function() {
+    const modal = document.getElementById('modalAddNewFood');
+    if (modal) {
+        modal.classList.add('active');
+        const nameInput = document.getElementById('customFoodNameInput');
+        if (nameInput) {
+            nameInput.value = '';
+            setTimeout(() => nameInput.focus(), 120);
+        }
+    }
+};
+
+window.closeAddFoodModal = function() {
+    const modal = document.getElementById('modalAddNewFood');
+    if (modal) modal.classList.remove('active');
+};
+
+window.handleAddNewFoodSubmit = function(e) {
+    if (e && e.preventDefault) e.preventDefault();
+
+    const nameInput = document.getElementById('customFoodNameInput');
+    const catSelect = document.getElementById('customFoodCategorySelect');
+    const priceInput = document.getElementById('customFoodPriceInput');
+
+    if (!nameInput || !nameInput.value.trim()) return;
+
+    const foodName = nameInput.value.trim();
+    const category = catSelect ? catSelect.value : 'Kebap & Köfte';
+    const selectedOption = catSelect ? catSelect.options[catSelect.selectedIndex] : null;
+    const emoji = (selectedOption && selectedOption.dataset.emoji) ? selectedOption.dataset.emoji : '🍽️';
+    const price = priceInput ? (parseFloat(priceInput.value) || 150) : 150;
+
+    const isDrink = (category === 'İçecekler') || /kola|ayran|su|şalgam|fanta|çay|kahve/i.test(foodName);
+
+    const newFoodItem = {
+        id: 'fc_custom_' + Date.now(),
+        name: foodName,
+        category: category,
+        emoji: emoji,
+        price: price,
+        desc: `${category} kategorisinde özel eklenen lezzet`,
+        type: isDrink ? 'drink' : 'food'
+    };
+
+    if (typeof currentFoodCatalog !== 'undefined' && Array.isArray(currentFoodCatalog)) {
+        currentFoodCatalog.unshift(newFoodItem);
+        localStorage.setItem('neyiyoruz_custom_catalog', JSON.stringify(currentFoodCatalog));
+    }
+
+    // Doğrudan tabağa da ekle
+    const targetIdx = (typeof getTargetPersonIndex === 'function') ? getTargetPersonIndex() : 0;
+    if (state.plates && state.plates[targetIdx]) {
+        const plate = state.plates[targetIdx];
+        if (!plate.items) plate.items = [];
+        
+        const existing = plate.items.find(it => it.name.trim().toLowerCase() === foodName.toLowerCase());
+        if (existing) {
+            existing.qty = (existing.qty || 1) + 1;
+            existing.unitPrice = price;
+            existing.price = existing.qty * price;
+        } else {
+            plate.items.push({
+                id: 'it_' + newFoodItem.id,
+                name: foodName,
+                qty: 1,
+                unitPrice: price,
+                price: price,
+                emoji: emoji,
+                type: isDrink ? 'drink' : 'food'
+            });
+        }
+    }
+
+    audio.init();
+    audio.fanfare();
+    closeAddFoodModal();
+
+    if (typeof renderMenuScreen === 'function') renderMenuScreen();
+    if (typeof updateMenuStickyCartBar === 'function') updateMenuStickyCartBar();
+    if (typeof renderPlatesUI === 'function') renderPlatesUI();
+    if (typeof broadcastPlatesChange === 'function') broadcastPlatesChange();
+
+    if (typeof window.showAppToast === 'function') {
+        window.showAppToast(`🎉 <strong>"${foodName}"</strong> (${price} ₺) menüye ve tabağınıza eklendi!`, 'success');
+    }
+};
+
+// Modal dışına tıklayınca kapatma
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('modalAddNewFood');
+    if (modal && e.target === modal) {
+        closeAddFoodModal();
+    }
+});
