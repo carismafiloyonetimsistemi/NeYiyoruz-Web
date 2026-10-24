@@ -164,6 +164,12 @@ const els = {
     likedCountBadge: document.getElementById('likedCountBadge'),
     btnBackFromWheelToSwipe: document.getElementById('btnBackFromWheelToSwipe'),
     btnBackFromWheelToLobby: document.getElementById('btnBackFromWheelToLobby'),
+    wheelParticipantCount: document.getElementById('wheelParticipantCount'),
+    wheelParticipantsList: document.getElementById('wheelParticipantsList'),
+    btnQuickAddFriendWheel: document.getElementById('btnQuickAddFriendWheel'),
+    btnGoToOrderDirect: document.getElementById('btnGoToOrderDirect'),
+    btnGoToWheel: document.getElementById('btnGoToWheel'),
+    btnWheelToOrder: document.getElementById('btnWheelToOrder'),
     btnBackFromResultToWheel: document.getElementById('btnBackFromResultToWheel'),
     btnBackFromResultToSwipe: document.getElementById('btnBackFromResultToSwipe'),
     btnBackFromResultToLobby: document.getElementById('btnBackFromResultToLobby'),
@@ -247,14 +253,14 @@ function navigateTo(screenId) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     if (screenId === 'screen-match') {
-        if (!state.foods || state.foods.length === 0) {
-            state.foods = DEFAULT_FOODS;
-        }
-        if (state.currentCardIndex >= state.foods.length) {
-            state.currentCardIndex = 0;
-        }
-        renderCurrentCard();
+        // Eşleşme kaldırıldığı için doğrudan sepete yönlendir
+        screenId = 'screen-result';
+        setupPlatesData();
+        renderPlatesUI();
+        renderResultScreen();
+        return;
     } else if (screenId === 'screen-wheel') {
+        renderWheelParticipants();
         populateVolunteerSelect();
         drawWheel();
     } else if (screenId === 'screen-history') {
@@ -740,10 +746,15 @@ window.addParticipantToRoom = function(name) {
     if (!state.room.participants.includes(clean)) {
         state.room.participants.push(clean);
         renderActiveRoom();
+        renderWheelParticipants();
+        populateVolunteerSelect();
+        drawWheel();
         if (state.plates) {
             setupPlatesData();
             renderPlatesUI();
         }
+        broadcastRoomState();
+        broadcastPlatesChange();
     }
 };
 
@@ -751,10 +762,15 @@ window.removeParticipantFromRoom = function(index) {
     if (state.room && state.room.participants.length > 1) {
         state.room.participants.splice(index, 1);
         renderActiveRoom();
+        renderWheelParticipants();
+        populateVolunteerSelect();
+        drawWheel();
         if (state.plates) {
             setupPlatesData();
             renderPlatesUI();
         }
+        broadcastRoomState();
+        broadcastPlatesChange();
     }
 };
 
@@ -812,12 +828,47 @@ els.btnShareWhatsApp.addEventListener('click', () => {
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
 });
 
-els.btnStartMatching.addEventListener('click', () => {
-    state.currentCardIndex = 0;
-    state.acceptedFoods = [];
-    renderCurrentCard();
-    navigateTo('screen-match');
-});
+if (els.btnGoToOrderDirect) {
+    els.btnGoToOrderDirect.addEventListener('click', () => {
+        setupPlatesData();
+        renderPlatesUI();
+        navigateTo('screen-result');
+    });
+}
+
+if (els.btnGoToWheel) {
+    els.btnGoToWheel.addEventListener('click', () => {
+        renderWheelParticipants();
+        populateVolunteerSelect();
+        drawWheel();
+        navigateTo('screen-wheel');
+    });
+}
+
+if (els.btnWheelToOrder) {
+    els.btnWheelToOrder.addEventListener('click', () => {
+        setupPlatesData();
+        renderPlatesUI();
+        navigateTo('screen-result');
+    });
+}
+
+if (els.btnQuickAddFriendWheel) {
+    els.btnQuickAddFriendWheel.addEventListener('click', () => {
+        const name = prompt('Odaya ve siparişçiye eklenecek kişinin adını yazın:');
+        if (name && name.trim()) {
+            window.addParticipantToRoom(name.trim());
+        }
+    });
+}
+
+if (els.btnStartMatching) {
+    els.btnStartMatching.addEventListener('click', () => {
+        setupPlatesData();
+        renderPlatesUI();
+        navigateTo('screen-result');
+    });
+}
 
 els.btnBackToLobby.addEventListener('click', () => {
     navigateTo('screen-lobby');
@@ -1188,10 +1239,47 @@ els.btnSkipToWheel.addEventListener('click', () => {
 });
 
 // --- 10. RUNNER SELECTION: VOLUNTEER OR WHEEL ---
+function renderWheelParticipants() {
+    if (!els.wheelParticipantsList) return;
+    const participants = getActiveParticipants();
+    if (els.wheelParticipantCount) {
+        els.wheelParticipantCount.innerText = participants.length;
+    }
+
+    els.wheelParticipantsList.innerHTML = participants.map((p) => {
+        const isRunner = state.runner && state.runner.toLowerCase() === p.toLowerCase();
+        const safeName = p.replace(/'/g, "\\'");
+        return `
+            <span class="chip clickable ${isRunner ? 'active-runner-chip' : ''}" onclick="selectRunnerDirectly('${safeName}')" title="${isRunner ? 'Seçili Siparişçi' : 'Siparişçi Olarak Seç'}">
+                <i class="fa-solid ${isRunner ? 'fa-crown text-amber' : 'fa-circle-user text-orange'}"></i>
+                <strong>${p}</strong>
+                ${isRunner ? '<span class="runner-badge-tag">👑 Siparişçi</span>' : ''}
+            </span>
+        `;
+    }).join('') + `
+        <button type="button" class="chip-add-btn" id="btnWheelInnerAdd">
+            <i class="fa-solid fa-user-plus"></i> + Kişi Ekle
+        </button>
+    `;
+
+    const innerAdd = document.getElementById('btnWheelInnerAdd');
+    if (innerAdd) {
+        innerAdd.onclick = () => {
+            const name = prompt('Odaya ve siparişçiye eklenecek kişinin adını yazın:');
+            if (name && name.trim()) {
+                window.addParticipantToRoom(name.trim());
+            }
+        };
+    }
+}
+
 function populateVolunteerSelect() {
     const participants = getActiveParticipants();
-    els.volunteerSelect.innerHTML = '<option value="">Gruptan Birini Seç...</option>' + 
-        participants.map(p => `<option value="${p}">${p}</option>`).join('');
+    if (els.volunteerSelect) {
+        els.volunteerSelect.innerHTML = '<option value="">Gruptan Birini Seç...</option>' + 
+            participants.map(p => `<option value="${p}" ${state.runner && state.runner.toLowerCase() === p.toLowerCase() ? 'selected' : ''}>${p}</option>`).join('');
+    }
+    renderWheelParticipants();
 }
 
 els.btnVolunteerMyself.addEventListener('click', () => {
@@ -1205,19 +1293,35 @@ els.volunteerSelect.addEventListener('change', (e) => {
     }
 });
 
-function selectRunnerDirectly(runnerPerson) {
+function broadcastRunnerChange(runnerPerson) {
+    if (!currentRoomChannel || !state.room) return;
+    try {
+        currentRoomChannel.send({
+            type: 'broadcast',
+            event: 'runner_selected',
+            payload: { runner: runnerPerson, sender: state.user ? state.user.name : 'Siz' }
+        });
+        broadcastRoomState();
+    } catch (e) {
+        console.warn('Broadcast runner error:', e);
+    }
+}
+
+function selectRunnerDirectly(runnerPerson, shouldBroadcast = true) {
+    audio.init();
     audio.fanfare();
     state.runner = runnerPerson;
     showRunnerResult(runnerPerson);
+    renderWheelParticipants();
+    if (els.volunteerSelect) {
+        els.volunteerSelect.value = runnerPerson;
+    }
+    if (shouldBroadcast) {
+        broadcastRunnerChange(runnerPerson);
+    }
 }
 
 function getWheelItems() {
-    if (state.wheelMode === 'food') {
-        if (state.acceptedFoods && state.acceptedFoods.length > 0) {
-            return state.acceptedFoods.map(f => f.name);
-        }
-        return state.foods.slice(0, 6).map(f => f.name);
-    }
     return getActiveParticipants();
 }
 
@@ -1275,7 +1379,7 @@ function drawWheel() {
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(state.wheelMode === 'food' ? '🍕' : '🏃', 0, 0);
+    ctx.fillText('🏃', 0, 0);
 
     ctx.restore();
 }
@@ -1320,16 +1424,9 @@ els.btnSpinWheel.addEventListener('click', () => {
         } else {
             state.isSpinning = false;
             els.btnSpinWheel.disabled = false;
-            if (state.wheelMode === 'food') {
-                const wheelItems = getWheelItems();
-                const foodWinnerName = wheelItems[targetSlice];
-                const foodObj = (state.acceptedFoods || state.foods).find(f => f.name === foodWinnerName) || { name: foodWinnerName, emoji: '🍽️', price: '150 ₺' };
-                state.winnerFood = foodObj;
-                showFoodWheelResult(foodObj);
-            } else {
-                state.runner = participants[targetSlice];
-                showRunnerResult(state.runner);
-            }
+            const wheelItems = getWheelItems();
+            const runnerWinner = wheelItems[targetSlice] || wheelItems[0];
+            selectRunnerDirectly(runnerWinner);
         }
     }
 
@@ -2336,6 +2433,7 @@ function initRoomRealtime(roomCode) {
 
             if (updated) {
                 renderActiveRoom();
+                renderWheelParticipants();
                 setupPlatesData();
                 renderPlatesUI();
                 populateVolunteerSelect();
@@ -2347,6 +2445,7 @@ function initRoomRealtime(roomCode) {
             if (key && !state.room.participants.includes(key)) {
                 state.room.participants.push(key);
                 renderActiveRoom();
+                renderWheelParticipants();
                 setupPlatesData();
                 renderPlatesUI();
                 populateVolunteerSelect();
@@ -2391,6 +2490,12 @@ function initRoomRealtime(roomCode) {
                 state.winnerFood = payload.winnerFood;
             }
 
+            if (payload.runner) {
+                state.runner = payload.runner;
+                showRunnerResult(payload.runner);
+                renderWheelParticipants();
+            }
+
             if (payload.timerEndTime && (!state.room.timerEndTime || payload.timerEndTime > state.room.timerEndTime)) {
                 state.room.timerEndTime = payload.timerEndTime;
                 state.room.timerMinutes = payload.timerMinutes || 10;
@@ -2402,6 +2507,18 @@ function initRoomRealtime(roomCode) {
             drawWheel();
             if (platesChanged) {
                 renderPlatesUI();
+            }
+        })
+        .on('broadcast', { event: 'runner_selected' }, ({ payload }) => {
+            console.log('[Broadcast] Received runner_selected:', payload);
+            if (payload && payload.runner) {
+                state.runner = payload.runner;
+                showRunnerResult(payload.runner);
+                renderWheelParticipants();
+                if (els.volunteerSelect) {
+                    els.volunteerSelect.value = payload.runner;
+                }
+                showGlobalToast(`👑 Siparişçi belirlendi: ${payload.runner}!`);
             }
         })
         .on('broadcast', { event: 'plates_update' }, ({ payload }) => {
@@ -2486,6 +2603,7 @@ function broadcastRoomState() {
                 participants: state.room.participants,
                 plates: state.plates,
                 winnerFood: state.winnerFood,
+                runner: state.runner,
                 timerEndTime: state.room.timerEndTime,
                 timerMinutes: state.room.timerMinutes
             }

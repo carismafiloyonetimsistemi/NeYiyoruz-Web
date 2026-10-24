@@ -188,11 +188,14 @@
 
                     <!-- Room Controls -->
                     <div class="room-action-buttons">
-                        <button class="btn btn-primary btn-lg btn-block" id="btnStartMatching">
-                            <i class="fa-solid fa-fire"></i> 1. Restoran / Mutfak Seçimini Başlat
+                        <button class="btn btn-primary btn-lg btn-block" id="btnGoToOrderDirect">
+                            <i class="fa-solid fa-basket-shopping"></i> 1. Siparişleri Ver & Sepete Git
                         </button>
-                        <button class="btn btn-outline btn-block mt-2" id="btnOpenMenuManager">
-                            <i class="fa-solid fa-list-check"></i> Seçenekleri Düzenle (<span id="menuCountBadge">10</span>)
+                        <button class="btn btn-outline btn-block mt-2" id="btnGoToWheel">
+                            <i class="fa-solid fa-dharmachakra"></i> 2. Siparişçiyi Belirle (Kura / Gönüllü)
+                        </button>
+                        <button class="btn btn-ghost btn-sm btn-block mt-2" id="btnOpenMenuManager">
+                            <i class="fa-solid fa-list-check"></i> Menü Fiyatlarını & Yemekleri Düzenle (<span id="menuCountBadge">10</span>)
                         </button>
                     </div>
                 </div>
@@ -248,8 +251,8 @@
             <!-- 4. RUNNER SELECTION (Çarkıfelek + GÖNÜLLÜ SEÇİMİ) -->
             <section id="screen-wheel" class="screen">
                 <div class="screen-sub-header">
-                    <button class="btn btn-sm btn-ghost" id="btnBackFromWheelToSwipe">
-                        <i class="fa-solid fa-arrow-left"></i> Mutfak Oylamasına Dön
+                    <button class="btn btn-sm btn-ghost" id="btnWheelToOrder">
+                        <i class="fa-solid fa-basket-shopping"></i> Sepet & Sipariş Ekranına Geç
                     </button>
                     <button class="btn btn-sm btn-ghost" id="btnBackFromWheelToLobby">
                         <i class="fa-solid fa-house"></i> Odaya Dön
@@ -259,6 +262,20 @@
                     <span class="badge-amber" id="wheelBadge">🏃 SİPARİŞÇİ BELİRLEME</span>
                     <h2 id="wheelTitle">Siparişi Kim Toplayacak?</h2>
                     <p id="wheelSubDesc">İster kura çekin, ister gönüllü olanı doğrudan siparişçi yapın!</p>
+                </div>
+
+                <!-- ODADAKİ KATILIMCILAR KUTUSU -->
+                <div class="glass-card mb-3 p-3">
+                    <div class="flex-between align-center mb-2">
+                        <span class="small-title"><i class="fa-solid fa-users text-orange"></i> Odadaki Katılımcılar (<span id="wheelParticipantCount">1</span>)</span>
+                        <button type="button" class="btn btn-xs btn-outline" id="btnQuickAddFriendWheel">
+                            <i class="fa-solid fa-user-plus"></i> + Kişi Ekle
+                        </button>
+                    </div>
+                    <p class="small-text text-muted mb-2">Siparişçi yapmak istediğiniz kişinin üstüne tıklayabilir veya aşağıdaki çarkla kura çekebilirsiniz:</p>
+                    <div class="participants-chips" id="wheelParticipantsList">
+                        <!-- Katılımcı çipleri JS ile doldurulur -->
+                    </div>
                 </div>
 
                 <!-- GÖNÜLLÜ SEÇİM KUTUSU -->
@@ -307,9 +324,6 @@
                 <div class="screen-sub-header">
                     <button class="btn btn-sm btn-ghost" id="btnBackFromResultToWheel">
                         <i class="fa-solid fa-arrow-left"></i> Çarka / Siparişçiye Dön
-                    </button>
-                    <button class="btn btn-sm btn-ghost" id="btnBackFromResultToSwipe">
-                        <i class="fa-solid fa-utensils"></i> Mutfak Seçimine Dön
                     </button>
                     <button class="btn btn-sm btn-ghost" id="btnBackFromResultToLobby">
                         <i class="fa-solid fa-house"></i> Odaya Dön
@@ -500,10 +514,6 @@
             <button class="nav-tab" data-target="screen-lobby" id="tabLobby">
                 <i class="fa-solid fa-users"></i>
                 <span>Oda</span>
-            </button>
-            <button class="nav-tab" data-target="screen-match" id="tabMatch">
-                <i class="fa-solid fa-fire"></i>
-                <span>Eşleşme</span>
             </button>
             <button class="nav-tab" data-target="screen-wheel" id="tabWheel">
                 <i class="fa-solid fa-dharmachakra"></i>

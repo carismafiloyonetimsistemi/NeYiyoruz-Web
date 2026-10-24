@@ -1880,3 +1880,35 @@ body {
     border-radius: 12px;
     font-weight: 700;
 }
+
+/* Siparişçi Ekranı Katılımcı Çipleri & Seçili Durum */
+.active-runner-chip {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(249, 115, 22, 0.35)) !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.45) !important;
+    color: #fbbf24 !important;
+    font-weight: 700 !important;
+}
+.runner-badge-tag {
+    background: #f59e0b;
+    color: #0f172a;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-left: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.chip.clickable {
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    user-select: none;
+}
+.chip.clickable:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary);
+    box-shadow: 0 4px 10px rgba(249, 115, 22, 0.25);
+}
+.chip.clickable:active {
+    transform: scale(0.97);
+}
