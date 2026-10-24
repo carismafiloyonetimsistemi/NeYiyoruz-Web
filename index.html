@@ -182,6 +182,9 @@
                     <button class="action-circle btn-reject" id="btnSwipeLeft" title="Yemem">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
+                    <button class="action-circle btn-undo" id="btnSwipeUndo" title="Son Seçimi Geri Al">
+                        <i class="fa-solid fa-arrow-rotate-left"></i>
+                    </button>
                     <button class="action-circle btn-superlike" id="btnSuperLike" title="Çok İsterim!">
                         <i class="fa-solid fa-star"></i>
                     </button>
@@ -197,11 +200,22 @@
                     <button class="btn btn-ghost mt-2" id="btnSkipToWheel">
                         <i class="fa-solid fa-dharmachakra"></i> Doğrudan Siparişçi Seçimine Geç
                     </button>
+                    <button class="btn btn-outline btn-block mt-2" id="btnShowLikedChoices" style="display: none;">
+                        <i class="fa-solid fa-list-check"></i> Beğendiklerimden Karar Ver (<span id="likedCountBadge">0</span>)
+                    </button>
                 </div>
             </section>
 
             <!-- 4. RUNNER SELECTION (Çarkıfelek + GÖNÜLLÜ SEÇİMİ) -->
             <section id="screen-wheel" class="screen">
+                <div class="screen-sub-header">
+                    <button class="btn btn-sm btn-ghost" id="btnBackFromWheelToSwipe">
+                        <i class="fa-solid fa-arrow-left"></i> Mutfak Oylamasına Dön
+                    </button>
+                    <button class="btn btn-sm btn-ghost" id="btnBackFromWheelToLobby">
+                        <i class="fa-solid fa-house"></i> Odaya Dön
+                    </button>
+                </div>
                 <div class="wheel-header text-center">
                     <span class="badge-amber">🏃 SİPARİŞÇİ BELİRLEME</span>
                     <h2>Siparişi Kim Toplayacak?</h2>
@@ -251,18 +265,34 @@
 
             <!-- 5. RESULT & INDIVIDUAL PLATES & FAIR DEBT SPLIT SCREEN -->
             <section id="screen-result" class="screen">
+                <div class="screen-sub-header">
+                    <button class="btn btn-sm btn-ghost" id="btnBackFromResultToWheel">
+                        <i class="fa-solid fa-arrow-left"></i> Çarka / Siparişçiye Dön
+                    </button>
+                    <button class="btn btn-sm btn-ghost" id="btnBackFromResultToSwipe">
+                        <i class="fa-solid fa-utensils"></i> Mutfak Seçimine Dön
+                    </button>
+                    <button class="btn btn-sm btn-ghost" id="btnBackFromResultToLobby">
+                        <i class="fa-solid fa-house"></i> Odaya Dön
+                    </button>
+                </div>
                 <div class="result-header text-center">
                     <span class="badge-green">🏆 MUTFAK SEÇİLDİ</span>
-                    <h2 id="finalFoodTitle">Kebap & Türk Mutfağı!</h2>
+                    <h2 id="finalFoodTitle">Seçilen Mutfak</h2>
                     <p>Mutfakta anlaşıldı! Şimdi herkes kendi tabağını ve tutarını belirlesin:</p>
                 </div>
 
                 <!-- Winner Spotlight Card -->
                 <div class="glass-card winner-spotlight">
-                    <div class="winner-img-box" id="winnerFoodEmoji">🍢</div>
+                    <div class="winner-img-box" id="winnerFoodEmoji">🍽️</div>
                     <div class="winner-details">
-                        <h3 id="winnerFoodName">Kebap Ziyafeti</h3>
-                        <p class="winner-tag">🔥 Grubun Ortak Kararı</p>
+                        <div class="winner-title-row">
+                            <h3 id="winnerFoodName">Seçilen Yemek</h3>
+                            <button class="btn btn-xs btn-outline" id="btnChangeWinnerCuisine" title="Farklı Bir Mutfak Seç">
+                                <i class="fa-solid fa-pen-to-square"></i> Mutfağı Değiştir
+                            </button>
+                        </div>
+                        <p class="winner-tag" id="winnerDecisionTag">🔥 Grubun Ortak Kararı</p>
                         <div class="runner-badge-pill">
                             <i class="fa-solid fa-person-running"></i> Siparişi Veren: <strong id="summaryRunnerName">-</strong>
                         </div>
@@ -385,6 +415,9 @@
 
             <!-- 6. GEÇMİŞ & BORÇ TAKİBİ EKRANI -->
             <section id="screen-history" class="screen">
+                <button class="btn btn-sm btn-ghost mb-3" id="btnBackFromHistory">
+                    <i class="fa-solid fa-arrow-left"></i> Odaya Geri Dön
+                </button>
                 <div class="lobby-header">
                     <h2>Geçmiş & Borç Defteri</h2>
                     <p class="sub-desc">Önceki yemek oylamaları, sipariş dökümleri ve kalan borçlar.</p>
@@ -497,16 +530,66 @@
         </div>
     </div>
 
-    <!-- MODAL 2: Eşleşme Kutlama Modalı -->
+    <!-- MODAL 2: Eşleşme / Seçim Kutlama Modalı -->
     <div class="modal" id="matchModal">
         <div class="modal-card">
-            <div class="modal-emoji">🎉🍢🔥</div>
-            <h2>MUTFAKTA ANLAŞILDI!</h2>
-            <p>Gruptaki herkes bu lezzete bayıldı:</p>
-            <div class="matched-food-box" id="modalMatchedFoodName">Kebap Ziyafeti</div>
-            <p class="modal-subtext">Şimdi siparişçiyi seçip tabaklarımızı belirleyelim!</p>
-            <button class="btn btn-primary btn-block btn-pulse" id="btnModalGoToWheel">
-                <i class="fa-solid fa-dharmachakra"></i> Siparişçi & Sepet Ekranına Git
+            <div class="modal-emoji" id="matchModalEmoji">🎉🍽️🔥</div>
+            <h2 id="matchModalHeading">MUTFAKTA ANLAŞILDI!</h2>
+            <p id="matchModalSubDesc">Gruptaki herkes bu lezzete bayıldı:</p>
+            <div class="matched-food-box" id="modalMatchedFoodName">Seçilen Yemek</div>
+            <p class="modal-subtext" id="matchModalSubtext">Şimdi siparişçiyi seçip tabaklarımızı belirleyelim!</p>
+            <div class="modal-actions-column">
+                <button class="btn btn-primary btn-block btn-pulse" id="btnModalGoToWheel">
+                    <i class="fa-solid fa-dharmachakra"></i> Siparişçiyi Belirle (Çarkıfelek)
+                </button>
+                <button class="btn btn-success btn-block" id="btnModalGoToCart">
+                    <i class="fa-solid fa-basket-shopping"></i> Doğrudan Sepete & Siparişe Geç
+                </button>
+                <button class="btn btn-ghost btn-block" id="btnModalKeepSwiping">
+                    <i class="fa-solid fa-arrow-rotate-left"></i> Oylamaya Devam Et / Değiştir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Mutfak Değiştirme Modalı -->
+    <div class="modal" id="cuisineChangeModal">
+        <div class="modal-card">
+            <div class="modal-header-row">
+                <div class="auth-modal-title">
+                    <span class="auth-icon-badge">🍽️</span>
+                    <h3>Farklı Bir Mutfak Seç</h3>
+                </div>
+                <button class="btn-close-modal" id="btnCloseCuisineModal" type="button">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="sub-desc mb-3">Sipariş etmek istediğin mutfağı listeden seç:</p>
+            <div id="cuisineSelectList" class="cuisine-select-grid">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Beğenilen Mutfaklar Arasından Seçim Modalı -->
+    <div class="modal" id="likedChoicesModal">
+        <div class="modal-card">
+            <div class="modal-header-row">
+                <div class="auth-modal-title">
+                    <span class="auth-icon-badge">❤️</span>
+                    <h3>Beğendiğin Seçenekler</h3>
+                </div>
+                <button class="btn-close-modal" id="btnCloseLikedModal" type="button">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="sub-desc mb-3">Oylamada beğendiğin mutfaklar. Hangisine karar verelim?</p>
+            <div id="likedFoodsGrid" class="cuisine-select-grid">
+                <!-- Injected via JS -->
+            </div>
+            <div class="divider">VEYA</div>
+            <button class="btn btn-primary btn-block" id="btnSpinWheelLikedFoods">
+                <i class="fa-solid fa-dharmachakra"></i> Beğendiklerim Arasında Çarkı Çevir
             </button>
         </div>
     </div>

@@ -46,6 +46,7 @@ const state = {
     foods: JSON.parse(localStorage.getItem('neyiyoruz_custom_foods')) || DEFAULT_FOODS,
     currentCardIndex: 0,
     acceptedFoods: [],
+    swipeHistory: [],
     winnerFood: null,
     runner: null,
     wheelAngle: 0,
@@ -152,6 +153,29 @@ const els = {
     matchModal: document.getElementById('matchModal'),
     modalMatchedFoodName: document.getElementById('modalMatchedFoodName'),
     btnModalGoToWheel: document.getElementById('btnModalGoToWheel'),
+    btnModalGoToCart: document.getElementById('btnModalGoToCart'),
+    btnModalKeepSwiping: document.getElementById('btnModalKeepSwiping'),
+    matchModalHeading: document.getElementById('matchModalHeading'),
+    matchModalSubDesc: document.getElementById('matchModalSubDesc'),
+    matchModalSubtext: document.getElementById('matchModalSubtext'),
+    btnSwipeUndo: document.getElementById('btnSwipeUndo'),
+    btnShowLikedChoices: document.getElementById('btnShowLikedChoices'),
+    likedCountBadge: document.getElementById('likedCountBadge'),
+    btnBackFromWheelToSwipe: document.getElementById('btnBackFromWheelToSwipe'),
+    btnBackFromWheelToLobby: document.getElementById('btnBackFromWheelToLobby'),
+    btnBackFromResultToWheel: document.getElementById('btnBackFromResultToWheel'),
+    btnBackFromResultToSwipe: document.getElementById('btnBackFromResultToSwipe'),
+    btnBackFromResultToLobby: document.getElementById('btnBackFromResultToLobby'),
+    btnBackFromHistory: document.getElementById('btnBackFromHistory'),
+    btnChangeWinnerCuisine: document.getElementById('btnChangeWinnerCuisine'),
+    winnerDecisionTag: document.getElementById('winnerDecisionTag'),
+    cuisineChangeModal: document.getElementById('cuisineChangeModal'),
+    cuisineSelectList: document.getElementById('cuisineSelectList'),
+    btnCloseCuisineModal: document.getElementById('btnCloseCuisineModal'),
+    likedChoicesModal: document.getElementById('likedChoicesModal'),
+    likedFoodsGrid: document.getElementById('likedFoodsGrid'),
+    btnCloseLikedModal: document.getElementById('btnCloseLikedModal'),
+    btnSpinWheelLikedFoods: document.getElementById('btnSpinWheelLikedFoods'),
     // Runner & Volunteer
     volunteerSelect: document.getElementById('volunteerSelect'),
     btnVolunteerMyself: document.getElementById('btnVolunteerMyself'),
@@ -914,13 +938,44 @@ function handleSwipe(direction) {
     audio.init();
     audio.tick();
 
-    if (direction === 'right' || direction === 'super') {
-        const item = state.foods[state.currentCardIndex];
-        state.acceptedFoods.push(item);
+    const currentItem = state.foods[state.currentCardIndex];
+    if (!currentItem) return;
 
-        if (state.acceptedFoods.length >= 2 || direction === 'super') {
-            triggerMatch(item);
+    // Record in history for UNDO
+    state.swipeHistory.push({
+        index: state.currentCardIndex,
+        item: currentItem,
+        direction: direction
+    });
+
+    const participants = getActiveParticipants();
+    const isSolo = (participants.length <= 1);
+
+    if (direction === 'right' || direction === 'super') {
+        if (!state.acceptedFoods.some(f => f.id === currentItem.id)) {
+            state.acceptedFoods.push(currentItem);
+        }
+        if (els.likedCountBadge) {
+            els.likedCountBadge.innerText = state.acceptedFoods.length;
+        }
+        if (els.btnShowLikedChoices) {
+            els.btnShowLikedChoices.style.display = 'block';
+        }
+
+        // In Super Like: user explicitly declares this as their choice!
+        if (direction === 'super') {
+            triggerMatch(currentItem);
             return;
+        }
+
+        // In Solo Mode: do NOT trigger a premature popup while user is just swiping through cards!
+        // Only in multi-person group room, check for room consensus
+        if (!isSolo) {
+            // In a group room, if at least 2 people liked the same food, trigger match
+            if (state.acceptedFoods.length >= 2) {
+                triggerMatch(currentItem);
+                return;
+            }
         }
     }
 
@@ -933,6 +988,30 @@ function handleSwipe(direction) {
         state.currentCardIndex++;
         renderCurrentCard();
     }, 220);
+}
+
+// Geri Al (Undo Last Swipe)
+function undoLastSwipe() {
+    if (!state.swipeHistory || state.swipeHistory.length === 0) {
+        alert('Geri alınacak önceki bir seçim yok.');
+        return;
+    }
+    const lastAction = state.swipeHistory.pop();
+    state.currentCardIndex = lastAction.index;
+
+    // If it was accepted, remove from acceptedFoods
+    if (lastAction.direction === 'right' || lastAction.direction === 'super') {
+        state.acceptedFoods = state.acceptedFoods.filter(f => f.id !== lastAction.item.id);
+        if (els.likedCountBadge) {
+            els.likedCountBadge.innerText = state.acceptedFoods.length;
+        }
+        if (state.acceptedFoods.length === 0 && els.btnShowLikedChoices) {
+            els.btnShowLikedChoices.style.display = 'none';
+        }
+    }
+
+    audio.tick();
+    renderCurrentCard();
 }
 
 function setupCardDrag(card) {
@@ -986,22 +1065,80 @@ function triggerMatch(food) {
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     }
 
+    const participants = getActiveParticipants();
+    const isSolo = (participants.length <= 1);
+
+    if (els.matchModalHeading) {
+        els.matchModalHeading.innerText = isSolo ? '✨ HARİKA SEÇİM!' : '🎉 MUTFAKTA ANLAŞILDI!';
+    }
+    if (els.matchModalSubDesc) {
+        els.matchModalSubDesc.innerText = isSolo ? 'Bugün ne yiyeceğine karar verdin:' : 'Gruptaki herkes bu lezzette buluştu:';
+    }
+    if (els.matchModalSubtext) {
+        els.matchModalSubtext.innerText = isSolo 
+            ? 'Şimdi ister tabaklarını belirle, ister siparişçiyi kura ile seç!'
+            : 'Şimdi siparişçiyi seçip tabaklarımızı belirleyelim!';
+    }
+
     els.modalMatchedFoodName.innerText = `${food.emoji} ${food.name}`;
     els.matchModal.classList.add('active');
 }
 
 function finishFoodMatch() {
-    state.winnerFood = state.acceptedFoods[0] || state.foods[0];
-    triggerMatch(state.winnerFood);
+    if (state.acceptedFoods.length === 0) {
+        // No food liked, offer restart or first food
+        const restart = confirm('Hiçbir mutfağı beğenmediniz. Kartları baştan oylamak ister misiniz?');
+        if (restart) {
+            state.currentCardIndex = 0;
+            state.swipeHistory = [];
+            state.acceptedFoods = [];
+            if (els.btnShowLikedChoices) els.btnShowLikedChoices.style.display = 'none';
+            renderCurrentCard();
+            return;
+        }
+        state.winnerFood = state.foods[0];
+        triggerMatch(state.winnerFood);
+    } else if (state.acceptedFoods.length === 1) {
+        state.winnerFood = state.acceptedFoods[0];
+        triggerMatch(state.winnerFood);
+    } else {
+        // Multiple liked foods: let user pick or spin
+        openLikedChoicesModal();
+    }
 }
 
-els.btnModalGoToWheel.addEventListener('click', () => {
-    els.matchModal.classList.remove('active');
-    navigateTo('screen-wheel');
-});
+// Modal Actions
+if (els.btnModalGoToWheel) {
+    els.btnModalGoToWheel.addEventListener('click', () => {
+        els.matchModal.classList.remove('active');
+        navigateTo('screen-wheel');
+    });
+}
+
+if (els.btnModalGoToCart) {
+    els.btnModalGoToCart.addEventListener('click', () => {
+        els.matchModal.classList.remove('active');
+        renderResultScreen();
+        navigateTo('screen-result');
+    });
+}
+
+if (els.btnModalKeepSwiping) {
+    els.btnModalKeepSwiping.addEventListener('click', () => {
+        els.matchModal.classList.remove('active');
+    });
+}
+
+if (els.btnSwipeUndo) {
+    els.btnSwipeUndo.addEventListener('click', undoLastSwipe);
+}
+
+if (els.btnShowLikedChoices) {
+    els.btnShowLikedChoices.addEventListener('click', openLikedChoicesModal);
+}
 
 els.btnSkipToWheel.addEventListener('click', () => {
-    state.winnerFood = state.foods[0];
+    state.winnerFood = state.acceptedFoods[0] || state.foods[0];
     navigateTo('screen-wheel');
 });
 
@@ -1153,14 +1290,21 @@ els.btnProceedToOrder.addEventListener('click', () => {
 
 // --- 11. BİREYSEL TABAKLAR & ADALETLİ HESAP BÖLÜŞÜMÜ (INDIVIDUAL PLATES & FAIR SPLIT) ---
 function renderResultScreen() {
-    const food = state.winnerFood || state.foods[0];
-    const runner = state.runner || (state.user ? state.user.name : (getActiveParticipants()[0] || 'Siparişçi'));
+    const food = state.winnerFood || (state.acceptedFoods && state.acceptedFoods[0]) || state.foods[0];
+    state.winnerFood = food;
+    const participants = getActiveParticipants();
+    const runner = state.runner || (state.user ? state.user.name : (participants[0] || 'Siparişçi'));
 
     els.finalFoodTitle.innerText = `${food.name}!`;
     els.winnerFoodEmoji.innerText = food.emoji;
     els.winnerFoodName.innerText = food.name;
     els.summaryRunnerName.innerText = runner;
     els.cartRunnerDisplay.innerText = runner;
+
+    const isSolo = (participants.length <= 1);
+    if (els.winnerDecisionTag) {
+        els.winnerDecisionTag.innerText = isSolo ? '✨ Senin Seçimin' : '🔥 Grubun Ortak Kararı';
+    }
 
     // Generate Affiliate Search Links
     const query = encodeURIComponent(food.name.replace(/[^a-zA-Z0-9ığüşöçİĞÜŞÖÇ ]/g, ''));
@@ -1586,3 +1730,114 @@ window.addEventListener('DOMContentLoaded', async () => {
     renderFoodManageList();
     drawWheel();
 });
+
+
+// --- MUTFAK DEĞİŞTİRME & BEĞENİLENLER MODALI VE GERİ BUTONLARI ---
+function openCuisineChangeModal() {
+    if (!els.cuisineSelectList) return;
+    els.cuisineSelectList.innerHTML = state.foods.map(item => `
+        <button class="cuisine-grid-btn ${state.winnerFood && state.winnerFood.id === item.id ? 'active' : ''}" data-food-id="${item.id}">
+            <span class="cuisine-grid-emoji">${item.emoji}</span>
+            <span class="cuisine-grid-name">${item.name}</span>
+        </button>
+    `).join('');
+
+    els.cuisineSelectList.querySelectorAll('.cuisine-grid-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const foodId = parseInt(btn.dataset.foodId);
+            const selected = state.foods.find(f => f.id === foodId);
+            if (selected) {
+                state.winnerFood = selected;
+                // Re-setup plates for the new cuisine
+                state.plates = [];
+                renderResultScreen();
+                if (els.cuisineChangeModal) els.cuisineChangeModal.classList.remove('active');
+            }
+        });
+    });
+
+    if (els.cuisineChangeModal) els.cuisineChangeModal.classList.add('active');
+}
+
+function openLikedChoicesModal() {
+    if (!els.likedFoodsGrid) return;
+    if (!state.acceptedFoods || state.acceptedFoods.length === 0) {
+        alert('Henüz beğendiğiniz bir mutfak yok.');
+        return;
+    }
+
+    els.likedFoodsGrid.innerHTML = state.acceptedFoods.map(item => `
+        <button class="cuisine-grid-btn" data-food-id="${item.id}">
+            <span class="cuisine-grid-emoji">${item.emoji}</span>
+            <span class="cuisine-grid-name">${item.name}</span>
+        </button>
+    `).join('');
+
+    els.likedFoodsGrid.querySelectorAll('.cuisine-grid-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const foodId = parseInt(btn.dataset.foodId);
+            const selected = state.foods.find(f => f.id === foodId);
+            if (selected) {
+                state.winnerFood = selected;
+                if (els.likedChoicesModal) els.likedChoicesModal.classList.remove('active');
+                triggerMatch(selected);
+            }
+        });
+    });
+
+    if (els.likedChoicesModal) els.likedChoicesModal.classList.add('active');
+}
+
+// Wire Change Cuisine button
+if (els.btnChangeWinnerCuisine) {
+    els.btnChangeWinnerCuisine.addEventListener('click', openCuisineChangeModal);
+}
+if (els.btnCloseCuisineModal) {
+    els.btnCloseCuisineModal.addEventListener('click', () => {
+        if (els.cuisineChangeModal) els.cuisineChangeModal.classList.remove('active');
+    });
+}
+if (els.btnCloseLikedModal) {
+    els.btnCloseLikedModal.addEventListener('click', () => {
+        if (els.likedChoicesModal) els.likedChoicesModal.classList.remove('active');
+    });
+}
+if (els.btnSpinWheelLikedFoods) {
+    els.btnSpinWheelLikedFoods.addEventListener('click', () => {
+        if (els.likedChoicesModal) els.likedChoicesModal.classList.remove('active');
+        state.winnerFood = state.acceptedFoods[Math.floor(Math.random() * state.acceptedFoods.length)];
+        navigateTo('screen-wheel');
+    });
+}
+
+// Screen Navigation Back Buttons
+if (els.btnBackFromWheelToSwipe) {
+    els.btnBackFromWheelToSwipe.addEventListener('click', () => {
+        navigateTo('screen-match');
+    });
+}
+if (els.btnBackFromWheelToLobby) {
+    els.btnBackFromWheelToLobby.addEventListener('click', () => {
+        navigateTo('screen-lobby');
+    });
+}
+if (els.btnBackFromResultToWheel) {
+    els.btnBackFromResultToWheel.addEventListener('click', () => {
+        navigateTo('screen-wheel');
+    });
+}
+if (els.btnBackFromResultToSwipe) {
+    els.btnBackFromResultToSwipe.addEventListener('click', () => {
+        navigateTo('screen-match');
+    });
+}
+if (els.btnBackFromResultToLobby) {
+    els.btnBackFromResultToLobby.addEventListener('click', () => {
+        navigateTo('screen-lobby');
+    });
+}
+if (els.btnBackFromHistory) {
+    els.btnBackFromHistory.addEventListener('click', () => {
+        navigateTo('screen-lobby');
+    });
+}
