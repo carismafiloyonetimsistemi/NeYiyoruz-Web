@@ -1478,31 +1478,13 @@ function renderPlatesUI() {
                     }).join('')}
                 </div>
 
-                <!-- Hızlı İçecek ve İlave Yemek / Ürün Çipleri -->
-                <div class="plate-quick-chips">
-                    <button type="button" class="quick-chip" onclick="addQuickItemToPlate(${index}, 'Döner / Dürüm', 220, '🌯', 'food')">
-                        + 🌯 Döner (220₺)
+                <!-- Temiz Sipariş Aksiyon Barı (Aynısından İsterim & Ürün Ekle) -->
+                <div class="plate-action-bar">
+                    <button type="button" class="btn-copy-same-plate" onclick="clonePlateForAnotherPerson(${index})" title="Bu siparişin aynısını başka biri için de ekler">
+                        <i class="fa-solid fa-user-plus"></i> 🤝 Aynısından İsterim (+1 Kişi)
                     </button>
-                    <button type="button" class="quick-chip" onclick="addQuickItemToPlate(${index}, 'Lahmacun', 110, '🍕', 'food')">
-                        + 🍕 Lahmacun (110₺)
-                    </button>
-                    <button type="button" class="quick-chip quick-chip-drink" onclick="addQuickItemToPlate(${index}, 'Kola', 50, '🥤', 'drink')">
-                        + 🥤 Kola (50₺)
-                    </button>
-                    <button type="button" class="quick-chip quick-chip-drink" onclick="addQuickItemToPlate(${index}, 'Ayran', 35, '🥛', 'drink')">
-                        + 🥛 Ayran (35₺)
-                    </button>
-                    <button type="button" class="quick-chip quick-chip-drink" onclick="addQuickItemToPlate(${index}, 'Şalgam Suyu', 35, '🍷', 'drink')">
-                        + 🍷 Şalgam (35₺)
-                    </button>
-                    <button type="button" class="quick-chip quick-chip-drink" onclick="addQuickItemToPlate(${index}, 'Su', 15, '💧', 'drink')">
-                        + 💧 Su (15₺)
-                    </button>
-                    <button type="button" class="quick-chip" onclick="addQuickItemToPlate(${index}, 'Patates Kızartması', 90, '🍟', 'side')">
-                        + 🍟 Patates (90₺)
-                    </button>
-                    <button type="button" class="quick-chip quick-chip-add" onclick="addNewCustomItemToPlate(${index})">
-                        <i class="fa-solid fa-plus"></i> Başka Bir Şey Ekle
+                    <button type="button" class="btn-add-item-plate" onclick="promptAddItemToPlate(${index})" title="Bu tabağa yeni bir yemek veya içecek ekle">
+                        <i class="fa-solid fa-plus"></i> + Ürün / İçecek Ekle
                     </button>
                 </div>
 
@@ -2164,3 +2146,101 @@ function onRoomTimerExpired() {
 // Wire setupTimerPresetListeners on load
 document.addEventListener('DOMContentLoaded', setupTimerPresetListeners);
 setupTimerPresetListeners();
+
+
+// --- AYNISINDAN İSTERİM (+1 KİŞİ / SİPARİŞE KATIL) & HIZLI ÜRÜN EKLE ---
+window.clonePlateForAnotherPerson = function(sourceIndex) {
+    const sourcePlate = state.plates[sourceIndex];
+    if (!sourcePlate || !sourcePlate.items || sourcePlate.items.length === 0) {
+        alert('Kopyalanacak bir ürün bulunamadı.');
+        return;
+    }
+
+    const friendName = prompt(`"${sourcePlate.person}" ile aynı siparişi verecek kişinin adı nedir?\n(Örn: Ahmet, Can, Zeynep)`);
+    if (!friendName || !friendName.trim()) return;
+
+    const cleanName = friendName.trim();
+
+    // Odaya dahil değilse ekle
+    if (!state.room) {
+        state.room = { code: '1001', title: 'Yemek Grubu', participants: [sourcePlate.person] };
+    }
+    if (!state.room.participants.includes(cleanName)) {
+        state.room.participants.push(cleanName);
+    }
+
+    // Aynı ürünleri klonla
+    const clonedItems = sourcePlate.items.map((it, idx) => ({
+        id: 'it_clone_' + Date.now() + '_' + idx,
+        name: it.name,
+        qty: it.qty || 1,
+        unitPrice: it.unitPrice || it.price,
+        price: it.price || ((it.qty || 1) * (it.unitPrice || it.price)),
+        emoji: it.emoji || '🍽️',
+        type: it.type || 'food'
+    }));
+
+    let targetPlate = state.plates.find(p => p.person.toLowerCase() === cleanName.toLowerCase());
+    if (targetPlate) {
+        targetPlate.items = clonedItems;
+    } else {
+        state.plates.push({
+            person: cleanName,
+            isRunner: false,
+            paid: false,
+            items: clonedItems
+        });
+    }
+
+    audio.init();
+    audio.fanfare();
+    if (window.confetti) {
+        confetti({ particleCount: 70, spread: 60, origin: { y: 0.7 } });
+    }
+
+    renderPlatesUI();
+    renderActiveRoom();
+
+    alert(`🎉 ${cleanName} aramıza katıldı ve "${sourcePlate.person}" ile aynı siparişi (${sourcePlate.items.map(i => (i.qty > 1 ? i.qty + 'x ' : '') + i.name).join(', ')}) tabağına eklendi!`);
+};
+
+window.promptAddItemToPlate = function(personIndex) {
+    const plate = state.plates[personIndex];
+    if (!plate) return;
+
+    const itemName = prompt('Eklenecek ürünün adı:\n(Örn: Ayran, Kola, Lahmacun, Çorba, Tatlı, Patates)');
+    if (!itemName || !itemName.trim()) return;
+
+    const cleanName = itemName.trim();
+    const defaultPrice = /kola/i.test(cleanName) ? 50 : /ayran/i.test(cleanName) ? 35 : /su/i.test(cleanName) ? 15 : /lahmacun/i.test(cleanName) ? 110 : 60;
+    
+    const priceStr = prompt(`"${cleanName}" için birim fiyat (₺):`, String(defaultPrice));
+    const price = parseFloat(priceStr) || defaultPrice;
+
+    if (!plate.items) plate.items = [];
+
+    // Eğer aynı isimde ürün zaten varsa adedini artır
+    const existing = plate.items.find(it => it.name.trim().toLowerCase() === cleanName.toLowerCase());
+    if (existing) {
+        existing.qty = (existing.qty || 1) + 1;
+        existing.unitPrice = existing.unitPrice || price;
+        existing.price = Math.round(existing.qty * existing.unitPrice);
+    } else {
+        const isDrink = /ayran|kola|su|şalgam|fanta|gazoz|çay|kahve/i.test(cleanName);
+        const emoji = isDrink ? '🥤' : /lahmacun|pizza/i.test(cleanName) ? '🍕' : /döner|dürüm/i.test(cleanName) ? '🌯' : /patates/i.test(cleanName) ? '🍟' : '🍽️';
+
+        plate.items.push({
+            id: 'it_add_' + Date.now(),
+            name: cleanName,
+            qty: 1,
+            unitPrice: price,
+            price: price,
+            emoji: emoji,
+            type: isDrink ? 'drink' : 'food'
+        });
+    }
+
+    audio.init();
+    audio.tick();
+    renderPlatesUI();
+};
