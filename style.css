@@ -2175,3 +2175,26 @@ body {
 .quick-food-chip:active {
     transform: scale(0.97);
 }
+
+/* Tabağımı Onayla Buton Stili */
+.btn-confirm-plate {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    border: none !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4) !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.btn-confirm-plate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.55) !important;
+}
+.btn-confirm-plate:active {
+    transform: translateY(0);
+}

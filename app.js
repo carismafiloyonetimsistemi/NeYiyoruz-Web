@@ -1243,11 +1243,24 @@ function updateMenuStickyCartBar() {
     const itemCount = (targetPlate.items || []).reduce((sum, it) => sum + (it.qty || 1), 0);
     const totalAmount = (targetPlate.items || []).reduce((sum, it) => sum + (parseFloat(it.price) || 0), 0);
 
+    const currentUserName = (state.user && state.user.name && state.user.name.trim()) ? state.user.name.trim() : '';
+    const isMyPlate = Boolean(currentUserName && targetPlate.person.trim().toLowerCase() === currentUserName.toLowerCase());
+
     if (els.stickyTargetPersonName) {
         els.stickyTargetPersonName.innerText = `🛒 ${targetPlate.person}'un Tabağı`;
     }
     if (els.stickyCartTotalText) {
         els.stickyCartTotalText.innerText = `${itemCount} Ürün • ${totalAmount} ₺`;
+    }
+
+    if (els.btnStickyGoToCart) {
+        if (isMyPlate || !currentUserName) {
+            els.btnStickyGoToCart.innerHTML = `<i class="fa-solid fa-circle-check"></i> Tabağımı Onayla`;
+            els.btnStickyGoToCart.title = "Seçtiğiniz yemekleri onaylayıp sepet & hesap masasına geçin";
+        } else {
+            els.btnStickyGoToCart.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${targetPlate.person}'un Tabağını Onayla`;
+            els.btnStickyGoToCart.title = `${targetPlate.person} için tabağı onaylayıp sepete geçin`;
+        }
     }
 }
 
@@ -1326,20 +1339,43 @@ if (els.btnClearMenuSearch) {
     });
 }
 
+function handleConfirmPlateAndProceed() {
+    const targetIdx = getTargetPersonIndex();
+    const targetPlate = (state.plates && state.plates[targetIdx]) ? state.plates[targetIdx] : null;
+
+    setupPlatesData();
+    renderPlatesUI();
+
+    const currentUserName = (state.user && state.user.name && state.user.name.trim()) ? state.user.name.trim() : '';
+    const personName = targetPlate ? targetPlate.person : (currentUserName || 'Tabağınız');
+    const itemCount = targetPlate ? (targetPlate.items || []).reduce((sum, it) => sum + (it.qty || 1), 0) : 0;
+
+    audio.init();
+    audio.fanfare();
+    if (window.confetti) {
+        confetti({ particleCount: 65, spread: 65, origin: { y: 0.7 } });
+    }
+
+    if (itemCount > 0) {
+        window.showAppToast(`✅ <strong>${personName}</strong> tabağı başarıyla onaylandı! Sepet & hesap masasına aktarılıyorsunuz...`, 'success');
+    } else {
+        window.showAppToast(`ℹ️ <strong>${personName}</strong> için tabak onaylandı. Dilediğiniz zaman sepet masasında yemek ekleyebilirsiniz.`, 'info');
+    }
+
+    broadcastPlatesChange();
+    if (typeof broadcastRoomState === 'function') {
+        broadcastRoomState();
+    }
+
+    navigateTo('screen-result');
+}
+
 if (els.btnMenuGoToPlates) {
-    els.btnMenuGoToPlates.addEventListener('click', () => {
-        setupPlatesData();
-        renderPlatesUI();
-        navigateTo('screen-result');
-    });
+    els.btnMenuGoToPlates.addEventListener('click', handleConfirmPlateAndProceed);
 }
 
 if (els.btnStickyGoToCart) {
-    els.btnStickyGoToCart.addEventListener('click', () => {
-        setupPlatesData();
-        renderPlatesUI();
-        navigateTo('screen-result');
-    });
+    els.btnStickyGoToCart.addEventListener('click', handleConfirmPlateAndProceed);
 }
 
 if (els.btnOpenCustomDishPrompt) {
