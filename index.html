@@ -355,19 +355,16 @@
                     <p>Herkes kendi tabağına dilediği yemek ve içecekleri eklesin:</p>
                 </div>
 
-                <!-- Winner Spotlight Card -->
+                <!-- Sipariş Masası ve Siparişçi Bilgi Kartı -->
                 <div class="glass-card winner-spotlight">
                     <div class="winner-img-box" id="winnerFoodEmoji">🍽️</div>
                     <div class="winner-details">
                         <div class="winner-title-row">
-                            <h3 id="winnerFoodName">Serbest Sipariş Masası</h3>
-                            <button class="btn btn-xs btn-outline" id="btnChangeWinnerCuisine" title="Farklı Bir Mutfak Seç">
-                                <i class="fa-solid fa-pen-to-square"></i> Mutfağı Değiştir
-                            </button>
+                            <h3 id="winnerFoodName">Ortak Sipariş Masası</h3>
                         </div>
                         <p class="winner-tag" id="winnerDecisionTag">📋 Herkes Kendi Tabağını Belirliyor</p>
                         <div class="runner-badge-pill">
-                            <i class="fa-solid fa-person-running"></i> Siparişi Veren: <strong id="summaryRunnerName">-</strong>
+                            <i class="fa-solid fa-person-running"></i> Siparişi Veren & Ödeyen: <strong id="summaryRunnerName">-</strong>
                         </div>
                     </div>
                 </div>
@@ -599,80 +596,6 @@
             <!-- Mevcut Yemekler Listesi (Silme Butonlu) -->
             <div class="food-items-manage-list" id="foodItemsManageList">
                 <!-- Injected via JS -->
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL 2: Eşleşme / Seçim Kutlama Modalı -->
-    <div class="modal" id="matchModal">
-        <div class="modal-card">
-            <div class="modal-emoji" id="matchModalEmoji">🎉🍽️🔥</div>
-            <h2 id="matchModalHeading">MUTFAKTA ANLAŞILDI!</h2>
-            <p id="matchModalSubDesc">Gruptaki herkes bu lezzete bayıldı:</p>
-            <div class="matched-food-box" id="modalMatchedFoodName">Seçilen Yemek</div>
-            <p class="modal-subtext" id="matchModalSubtext">Şimdi siparişçiyi seçip tabaklarımızı belirleyelim!</p>
-            <div class="modal-actions-column">
-                <button class="btn btn-primary btn-block btn-pulse" id="btnModalGoToWheel">
-                    <i class="fa-solid fa-dharmachakra"></i> Siparişçiyi Belirle (Çarkıfelek)
-                </button>
-                <button class="btn btn-success btn-block" id="btnModalGoToCart">
-                    <i class="fa-solid fa-basket-shopping"></i> Doğrudan Sepete & Siparişe Geç
-                </button>
-                <button class="btn btn-ghost btn-block" id="btnModalKeepSwiping">
-                    <i class="fa-solid fa-arrow-rotate-left"></i> Oylamaya Devam Et / Değiştir
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: Mutfak Değiştirme Modalı -->
-    <div class="modal" id="cuisineChangeModal">
-        <div class="modal-card">
-            <div class="modal-header-row">
-                <div class="auth-modal-title">
-                    <span class="auth-icon-badge">🍽️</span>
-                    <h3>Farklı Bir Mutfak Seç</h3>
-                </div>
-                <button class="btn-close-modal" id="btnCloseCuisineModal" type="button">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <p class="sub-desc mb-3">Sipariş etmek istediğin mutfağı listeden seç:</p>
-            <div id="cuisineSelectList" class="cuisine-select-grid">
-                <!-- Injected via JS -->
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: Beğenilen Mutfaklar Arasından Seçim Modalı -->
-    <div class="modal" id="likedChoicesModal">
-        <div class="modal-card">
-            <div class="modal-header-row">
-                <div class="auth-modal-title">
-                    <span class="auth-icon-badge">❤️</span>
-                    <h3 id="likedModalTitle">Beğendiğin Ürünler</h3>
-                </div>
-                <button class="btn-close-modal" id="btnCloseLikedModal" type="button">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <p class="sub-desc mb-2">Beğendiğin tüm yemek ve içecekler:</p>
-            <div id="likedFoodsGrid" class="cuisine-select-grid mb-3">
-                <!-- Injected via JS -->
-            </div>
-
-            <!-- PRIMARY ACTION: ADD ALL LIKED ITEMS TO PLATE & GO TO CART -->
-            <button class="btn btn-success btn-block btn-lg" id="btnAddAllLikedToPlate">
-                <i class="fa-solid fa-basket-shopping"></i> Hepsini Tabağıma Ekle & Sepete Git
-            </button>
-            <p class="small-text text-center text-muted mt-1 mb-3">Beğendiğin tüm ürünler tabağına aktarılır, adetlerini değiştirebilirsin.</p>
-
-            <div class="divider">VEYA BİRİNİ SEÇ</div>
-
-            <div style="display: flex; gap: 8px;">
-                <button class="btn btn-outline flex-1" id="btnSpinWheelLikedFoods">
-                    <i class="fa-solid fa-dharmachakra"></i> Çarkla 1 Tanesini Seç
-                </button>
             </div>
         </div>
     </div>
