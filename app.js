@@ -24,6 +24,58 @@ const DEFAULT_FOODS = [
 ];
 
 // Default sample dishes based on selected cuisine
+
+// --- KAPSAMLI LEZZET MENÜSÜ KATALOĞU (FOOD CATALOG) ---
+const FOOD_CATALOG = [
+    // Lahmacun & Pide
+    { id: 'fc_1', name: 'Taş Fırın Lahmacun', category: 'Lahmacun & Pide', emoji: '🍕', price: 110, desc: 'Çıtır çıtır taş fırın lahmacun, bol maydanoz ve limonla' },
+    { id: 'fc_2', name: 'Kaşarlı Pide', category: 'Lahmacun & Pide', emoji: '🥩', price: 190, desc: 'Özel hamur, bol erimiş kaşar peyniri' },
+    { id: 'fc_3', name: 'Kuşbaşılı Kaşarlı Pide', category: 'Lahmacun & Pide', emoji: '🥩', price: 240, desc: 'Dana kuşbaşı eti, domates, biber ve kaşar' },
+    { id: 'fc_4', name: 'Kıymalı Pide', category: 'Lahmacun & Pide', emoji: '🥩', price: 210, desc: 'Baharatlı kıyma harçlı geleneksel Karadeniz pidesi' },
+
+    // Döner & Dürüm
+    { id: 'fc_5', name: 'Et Döner Dürüm', category: 'Döner & Dürüm', emoji: '🌯', price: 220, desc: '100g yaprak et döner, domates, turşu ve özel sos' },
+    { id: 'fc_6', name: 'Tavuk Döner Dürüm (Hatay Usulü)', category: 'Döner & Dürüm', emoji: '🌯', price: 150, desc: 'Özel soslu çift lavaş, sarımsaklı mayonez ve patates' },
+    { id: 'fc_7', name: 'Porsiyon Et Döner & Pilav', category: 'Döner & Dürüm', emoji: '🍽️', price: 290, desc: 'Tereyağlı pirinç pilavı üzerinde yaprak et döner' },
+    { id: 'fc_8', name: 'İskender Kebap (Et Dönerden)', category: 'Döner & Dürüm', emoji: '🥩', price: 330, desc: 'Kızarmış pide, domates sosu, yoğurt ve tereyağı' },
+
+    // Kebap & Köfte
+    { id: 'fc_9', name: 'Adana Kebap Dürüm / Porsiyon', category: 'Kebap & Köfte', emoji: '🍢', price: 280, desc: 'Zırhta çekilmiş acılı kıyma kebabı, köz sebzeler' },
+    { id: 'fc_10', name: 'Urfa Kebap', category: 'Kebap & Köfte', emoji: '🍢', price: 280, desc: 'Acısız zırh kebabı, lavaş ve közlenmiş garnitür' },
+    { id: 'fc_11', name: 'Izgara Köfte Porsiyon', category: 'Kebap & Köfte', emoji: '🥪', price: 230, desc: 'Geleneksel anne köftesi, patates kızartması ve pilav' },
+    { id: 'fc_12', name: 'Tavuk Şiş Dürüm', category: 'Kebap & Köfte', emoji: '🍗', price: 190, desc: 'Marine edilmiş tavuk göğsü, köz sebzeler' },
+
+    // Burger & Pizza
+    { id: 'fc_13', name: 'Gurme Smash Burger Menü', category: 'Burger & Pizza', emoji: '🍔', price: 260, desc: '140g dana köfte, cheddar, karamelize soğan, patates' },
+    { id: 'fc_14', name: 'Tavuk Burger Menü', category: 'Burger & Pizza', emoji: '🍔', price: 195, desc: 'Çıtır panelenmiş tavuk fileto, marul, patates' },
+    { id: 'fc_15', name: 'Büyük Karışık Pizza', category: 'Burger & Pizza', emoji: '🍕', price: 250, desc: 'Sucuk, sosis, mantar, mısır, zeytin ve bol mozzarella' },
+    { id: 'fc_16', name: 'Margarita Pizza', category: 'Burger & Pizza', emoji: '🍕', price: 200, desc: 'İtalyan domates sosu, fesleğen ve taze mozzarella' },
+
+    // Çorba & Ev Yemeği
+    { id: 'fc_17', name: 'Mercimek Çorbası', category: 'Çorba & Ev Yemeği', emoji: '🍲', price: 90, desc: 'Tereyağlı süzme mercimek çorbası, kruton ve limon' },
+    { id: 'fc_18', name: 'Kuru Fasulye & Pilav', category: 'Çorba & Ev Yemeği', emoji: '🍲', price: 160, desc: 'Güveçte tereyağlı İspir fasulyesi ve dane pilav' },
+    { id: 'fc_19', name: 'Kayseri Mantısı', category: 'Çorba & Ev Yemeği', emoji: '🥟', price: 210, desc: 'Sarımsaklı yoğurt, nane, sumak ve tereyağlı sos' },
+    { id: 'fc_20', name: 'Çiğ Köfte Dürüm (Mega)', category: 'Çorba & Ev Yemeği', emoji: '🥬', price: 95, desc: 'Bol yeşillik, limon, nar ekşisi ve acı soslu lavaş' },
+
+    // Yan Lezzetler
+    { id: 'fc_21', name: 'Büyük Patates Kızartması', category: 'Yan Lezzetler', emoji: '🍟', price: 85, desc: 'Baharatlı çıtır altın sarısı patates' },
+    { id: 'fc_22', name: 'Çıtır Soğan Halkası (8 Adet)', category: 'Yan Lezzetler', emoji: '🧅', price: 75, desc: 'Altın sarısı çıtır soğan halkaları' },
+
+    // İçecekler
+    { id: 'fc_23', name: 'Büyük Yayık Ayran (300ml)', category: 'İçecekler', emoji: '🥤', price: 35, desc: 'Bol köpüklü soğuk yayık ayranı' },
+    { id: 'fc_24', name: 'Kutu Kola (330ml)', category: 'İçecekler', emoji: '🥤', price: 50, desc: 'Soğuk Coca-Cola / Zero' },
+    { id: 'fc_25', name: 'Kutu Fanta / Sprite (330ml)', category: 'İçecekler', emoji: '🥤', price: 50, desc: 'Soğuk meyveli gazlı içecek' },
+    { id: 'fc_26', name: 'Şalgam Suyu (330ml Acılı/Acısız)', category: 'İçecekler', emoji: '🥤', price: 35, desc: 'Doğal Adana şalgam suyu' },
+    { id: 'fc_27', name: 'Doğal Kaynak Suyu (500ml)', category: 'İçecekler', emoji: '💧', price: 15, desc: 'Pet şişe soğuk su' },
+    { id: 'fc_28', name: 'Ice Tea (Şeftali / Limon)', category: 'İçecekler', emoji: '🥤', price: 50, desc: 'Soğuk kutu çay 330ml' },
+
+    // Tatlılar
+    { id: 'fc_29', name: 'Fıstıklı Baklava (3 Dilim)', category: 'Tatlılar', emoji: '🍰', price: 180, desc: 'Antep fıstıklı çıtır kare baklava' },
+    { id: 'fc_30', name: 'Sıcak Hatay Künefesi', category: 'Tatlılar', emoji: '🍰', price: 165, desc: 'Erimiş özel peynirli çıtır kadayıf, Antep fıstıklı' },
+    { id: 'fc_31', name: 'Fırın Sütlaç', category: 'Tatlılar', emoji: '🍮', price: 110, desc: 'Fırında nar gibi kızarmış geleneksel sütlaç' },
+    { id: 'fc_32', name: 'Sıcak Çikolatalı Sufle', category: 'Tatlılar', emoji: '🍫', price: 135, desc: 'Akışkan Belçika çikolatalı sufle' }
+];
+
 const SAMPLE_DISHES = {
     'Kebap & Ocakbaşı': [
         { dish: 'Adana Kebap (Tek Lavaş) + Şalgam', price: 340 },
@@ -170,6 +222,18 @@ const els = {
     btnGoToOrderDirect: document.getElementById('btnGoToOrderDirect'),
     btnGoToWheel: document.getElementById('btnGoToWheel'),
     btnWheelToOrder: document.getElementById('btnWheelToOrder'),
+    btnGoToMenu: document.getElementById('btnGoToMenu'),
+    menuTargetPersonSelect: document.getElementById('menuTargetPersonSelect'),
+    menuSearchInput: document.getElementById('menuSearchInput'),
+    btnClearMenuSearch: document.getElementById('btnClearMenuSearch'),
+    menuCategoriesBar: document.getElementById('menuCategoriesBar'),
+    menuItemsGrid: document.getElementById('menuItemsGrid'),
+    btnOpenCustomDishPrompt: document.getElementById('btnOpenCustomDishPrompt'),
+    menuStickyCartBar: document.getElementById('menuStickyCartBar'),
+    stickyTargetPersonName: document.getElementById('stickyTargetPersonName'),
+    stickyCartTotalText: document.getElementById('stickyCartTotalText'),
+    btnStickyGoToCart: document.getElementById('btnStickyGoToCart'),
+    btnMenuGoToPlates: document.getElementById('btnMenuGoToPlates'),
     btnBackFromResultToWheel: document.getElementById('btnBackFromResultToWheel'),
     btnBackFromResultToSwipe: document.getElementById('btnBackFromResultToSwipe'),
     btnBackFromResultToLobby: document.getElementById('btnBackFromResultToLobby'),
@@ -252,13 +316,10 @@ function navigateTo(screenId) {
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    if (screenId === 'screen-match') {
-        // Eşleşme kaldırıldığı için doğrudan sepete yönlendir
-        screenId = 'screen-result';
+    if (screenId === 'screen-match' || screenId === 'screen-menu') {
+        screenId = 'screen-menu';
         setupPlatesData();
-        renderPlatesUI();
-        renderResultScreen();
-        return;
+        renderMenuScreen();
     } else if (screenId === 'screen-wheel') {
         renderWheelParticipants();
         populateVolunteerSelect();
@@ -1026,6 +1087,263 @@ els.btnCloseMenuManager.addEventListener('click', () => {
     els.menuManagerModal.classList.remove('active');
 });
 
+
+// --- 8B. YEMEK SEÇİMİ & MENÜ SİSTEMİ (FOOD CATALOG & SELECTION) ---
+let currentMenuCategory = 'Tümü';
+let currentMenuSearch = '';
+const menuQuantities = {}; // { fc_1: 3, fc_2: 1 }
+
+const MENU_CATEGORIES = [
+    'Tümü',
+    'Lahmacun & Pide',
+    'Döner & Dürüm',
+    'Kebap & Köfte',
+    'Burger & Pizza',
+    'Çorba & Ev Yemeği',
+    'Yan Lezzetler',
+    'İçecekler',
+    'Tatlılar'
+];
+
+function getTargetPersonIndex() {
+    if (!state.plates || state.plates.length === 0) {
+        setupPlatesData();
+    }
+    const select = els.menuTargetPersonSelect;
+    if (select && select.value !== '') {
+        const val = parseInt(select.value, 10);
+        if (!isNaN(val) && state.plates[val]) return val;
+    }
+    const myName = state.user ? state.user.name : null;
+    if (myName && state.plates) {
+        const idx = state.plates.findIndex(p => p.person.toLowerCase() === myName.toLowerCase());
+        if (idx >= 0) return idx;
+    }
+    return 0;
+}
+
+window.openMenuForPerson = function(personIndex) {
+    setupPlatesData();
+    navigateTo('screen-menu');
+    if (els.menuTargetPersonSelect) {
+        els.menuTargetPersonSelect.value = String(personIndex);
+    }
+    renderMenuScreen();
+};
+
+function renderMenuScreen() {
+    setupPlatesData();
+    const participants = getActiveParticipants();
+    const targetIdx = getTargetPersonIndex();
+    const targetPlate = (state.plates && state.plates[targetIdx]) ? state.plates[targetIdx] : (state.plates && state.plates[0] ? state.plates[0] : { person: 'Siz', items: [] });
+
+    // 1. Populate Target Person Select
+    if (els.menuTargetPersonSelect && state.plates) {
+        els.menuTargetPersonSelect.innerHTML = state.plates.map((p, idx) => `
+            <option value="${idx}" ${idx === targetIdx ? 'selected' : ''}>
+                👤 ${p.person} ${p.person === (state.user?.name) ? '(Siz)' : ''}
+            </option>
+        `).join('');
+
+        els.menuTargetPersonSelect.onchange = () => {
+            renderMenuScreen();
+        };
+    }
+
+    // 2. Render Categories Bar
+    if (els.menuCategoriesBar) {
+        els.menuCategoriesBar.innerHTML = MENU_CATEGORIES.map(cat => `
+            <button type="button" class="menu-cat-chip ${cat === currentMenuCategory ? 'active' : ''}" 
+                    onclick="setMenuCategory('${cat.replace(/'/g, "\\'")}')">
+                ${cat === 'Tümü' ? '🌟 Tümü' : 
+                  cat === 'Lahmacun & Pide' ? '🍕 ' + cat : 
+                  cat === 'Döner & Dürüm' ? '🌯 ' + cat : 
+                  cat === 'Kebap & Köfte' ? '🍢 ' + cat : 
+                  cat === 'Burger & Pizza' ? '🍔 ' + cat : 
+                  cat === 'Çorba & Ev Yemeği' ? '🍲 ' + cat : 
+                  cat === 'İçecekler' ? '🥤 ' + cat : 
+                  cat === 'Yan Lezzetler' ? '🍟 ' + cat : '🍰 ' + cat}
+            </button>
+        `).join('');
+    }
+
+    // 3. Filter Foods
+    const q = currentMenuSearch.trim().toLowerCase();
+    const filteredFoods = FOOD_CATALOG.filter(item => {
+        const matchesCategory = (currentMenuCategory === 'Tümü' || item.category === currentMenuCategory);
+        const matchesSearch = !q || item.name.toLowerCase().includes(q) || (item.desc && item.desc.toLowerCase().includes(q)) || item.category.toLowerCase().includes(q);
+        return matchesCategory && matchesSearch;
+    });
+
+    // 4. Render Food Cards Grid
+    if (els.menuItemsGrid) {
+        if (filteredFoods.length === 0) {
+            els.menuItemsGrid.innerHTML = `
+                <div class="glass-card p-4 text-center">
+                    <span style="font-size: 32px;">🔍</span>
+                    <h4 class="mt-2">Sonuç Bulunamadı</h4>
+                    <p class="small-text text-muted">"${currentMenuSearch}" ile eşleşen bir yemek bulunamadı.</p>
+                    <button type="button" class="btn btn-sm btn-primary mt-2" onclick="promptAddItemToPlate(${targetIdx})">
+                        <i class="fa-solid fa-pen"></i> Özel Olarak Ekle
+                    </button>
+                </div>
+            `;
+        } else {
+            els.menuItemsGrid.innerHTML = filteredFoods.map(item => {
+                const qty = menuQuantities[item.id] || 1;
+                return `
+                <div class="menu-catalog-card">
+                    <div class="catalog-card-left">
+                        <div class="catalog-card-emoji">${item.emoji}</div>
+                        <div class="catalog-card-details">
+                            <h4 class="catalog-card-title">${item.name}</h4>
+                            <span class="catalog-card-desc">${item.desc}</span>
+                            <div class="catalog-card-price">${item.price} ₺</div>
+                        </div>
+                    </div>
+                    <div class="catalog-card-actions">
+                        <div class="catalog-qty-stepper">
+                            <button type="button" class="btn-catalog-qty" onclick="changeCatalogItemQty('${item.id}', -1)">-</button>
+                            <span class="catalog-qty-val" id="catalogQty_${item.id}">${qty}</span>
+                            <button type="button" class="btn-catalog-qty" onclick="changeCatalogItemQty('${item.id}', 1)">+</button>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary btn-catalog-add" onclick="addCatalogItemToTargetPlate('${item.id}')">
+                            <i class="fa-solid fa-plus"></i> Ekle
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+    }
+
+    // 5. Update Sticky Cart Bar
+    updateMenuStickyCartBar();
+}
+
+function updateMenuStickyCartBar() {
+    const targetIdx = getTargetPersonIndex();
+    const targetPlate = (state.plates && state.plates[targetIdx]) ? state.plates[targetIdx] : (state.plates && state.plates[0] ? state.plates[0] : null);
+    if (!targetPlate) return;
+
+    const itemCount = (targetPlate.items || []).reduce((sum, it) => sum + (it.qty || 1), 0);
+    const totalAmount = (targetPlate.items || []).reduce((sum, it) => sum + (parseFloat(it.price) || 0), 0);
+
+    if (els.stickyTargetPersonName) {
+        els.stickyTargetPersonName.innerText = `🛒 ${targetPlate.person}'un Tabağı`;
+    }
+    if (els.stickyCartTotalText) {
+        els.stickyCartTotalText.innerText = `${itemCount} Ürün • ${totalAmount} ₺`;
+    }
+}
+
+window.setMenuCategory = function(cat) {
+    currentMenuCategory = cat;
+    renderMenuScreen();
+};
+
+window.changeCatalogItemQty = function(itemId, delta) {
+    const current = menuQuantities[itemId] || 1;
+    const next = Math.max(1, Math.min(99, current + delta));
+    menuQuantities[itemId] = next;
+    const el = document.getElementById(`catalogQty_${itemId}`);
+    if (el) el.innerText = next;
+};
+
+window.addCatalogItemToTargetPlate = function(itemId) {
+    const item = FOOD_CATALOG.find(f => f.id === itemId);
+    if (!item) return;
+
+    const targetIdx = getTargetPersonIndex();
+    const plate = state.plates[targetIdx];
+    if (!plate) return;
+
+    if (!plate.items) plate.items = [];
+
+    const qty = menuQuantities[itemId] || 1;
+    const unitPrice = item.price;
+
+    const existing = plate.items.find(it => it.name.trim().toLowerCase() === item.name.trim().toLowerCase());
+    if (existing) {
+        existing.qty = (existing.qty || 1) + qty;
+        existing.unitPrice = unitPrice;
+        existing.price = Math.round(existing.qty * existing.unitPrice);
+    } else {
+        const isDrink = (item.category === 'İçecekler');
+        plate.items.push({
+            id: 'it_cat_' + Date.now() + Math.random().toString(36).substr(2, 4),
+            name: item.name,
+            qty: qty,
+            unitPrice: unitPrice,
+            price: Math.round(qty * unitPrice),
+            emoji: item.emoji,
+            type: isDrink ? 'drink' : 'food'
+        });
+    }
+
+    // Reset qty stepper back to 1
+    menuQuantities[itemId] = 1;
+    const qtyEl = document.getElementById(`catalogQty_${itemId}`);
+    if (qtyEl) qtyEl.innerText = '1';
+
+    audio.init();
+    audio.tick();
+    showGlobalToast(`✅ ${qty}x ${item.name} eklendi! (${plate.person})`);
+    updateMenuStickyCartBar();
+    broadcastPlatesChange();
+};
+
+// Wire menu search input & buttons
+if (els.menuSearchInput) {
+    els.menuSearchInput.addEventListener('input', (e) => {
+        currentMenuSearch = e.target.value;
+        if (els.btnClearMenuSearch) {
+            els.btnClearMenuSearch.style.display = currentMenuSearch ? 'block' : 'none';
+        }
+        renderMenuScreen();
+    });
+}
+if (els.btnClearMenuSearch) {
+    els.btnClearMenuSearch.addEventListener('click', () => {
+        currentMenuSearch = '';
+        els.menuSearchInput.value = '';
+        els.btnClearMenuSearch.style.display = 'none';
+        renderMenuScreen();
+    });
+}
+
+if (els.btnMenuGoToPlates) {
+    els.btnMenuGoToPlates.addEventListener('click', () => {
+        setupPlatesData();
+        renderPlatesUI();
+        navigateTo('screen-result');
+    });
+}
+
+if (els.btnStickyGoToCart) {
+    els.btnStickyGoToCart.addEventListener('click', () => {
+        setupPlatesData();
+        renderPlatesUI();
+        navigateTo('screen-result');
+    });
+}
+
+if (els.btnOpenCustomDishPrompt) {
+    els.btnOpenCustomDishPrompt.addEventListener('click', () => {
+        const targetIdx = getTargetPersonIndex();
+        promptAddItemToPlate(targetIdx);
+        updateMenuStickyCartBar();
+    });
+}
+
+if (els.btnGoToMenu) {
+    els.btnGoToMenu.addEventListener('click', () => {
+        setupPlatesData();
+        renderMenuScreen();
+        navigateTo('screen-menu');
+    });
+}
+
 // --- 9. TINDER-STYLE CUISINE / RESTAURANT MATCH (SWIPE) ---
 function renderCurrentCard() {
     if (state.currentCardIndex >= state.foods.length) {
@@ -1620,13 +1938,27 @@ function renderPlatesUI() {
                     }).join('')}
                 </div>
 
-                <!-- Temiz Sipariş Aksiyon Barı (Aynısından İsterim & Ürün Ekle) -->
+                <!-- Hızlı Lezzet Ekleme Çipleri (Tek Tıkla Sepete) -->
+                <div class="plate-quick-chips-box">
+                    <span class="quick-chips-label"><i class="fa-solid fa-bolt text-orange"></i> Hızlı Ekle:</span>
+                    <div class="plate-quick-chips">
+                        <button type="button" class="quick-food-chip" onclick="addQuickItemToPlate(${index}, 'Taş Fırın Lahmacun', 110, '🍕', 'food')">🍕 Lahmacun 110₺</button>
+                        <button type="button" class="quick-food-chip" onclick="addQuickItemToPlate(${index}, 'Et Döner Dürüm', 220, '🌯', 'food')">🌯 Et Döner 220₺</button>
+                        <button type="button" class="quick-food-chip" onclick="addQuickItemToPlate(${index}, 'Gurme Burger Menü', 260, '🍔', 'food')">🍔 Burger 260₺</button>
+                        <button type="button" class="quick-food-chip" onclick="addQuickItemToPlate(${index}, 'Büyük Yayık Ayran', 35, '🥤', 'drink')">🥤 Ayran 35₺</button>
+                        <button type="button" class="quick-food-chip" onclick="addQuickItemToPlate(${index}, 'Kutu Kola', 50, '🥤', 'drink')">🥤 Kola 50₺</button>
+                        <button type="button" class="quick-food-chip" onclick="addQuickItemToPlate(${index}, 'Büyük Patates', 85, '🍟', 'food')">🍟 Patates 85₺</button>
+                        <button type="button" class="quick-food-chip" onclick="addQuickItemToPlate(${index}, 'Su (500ml)', 15, '💧', 'drink')">💧 Su 15₺</button>
+                    </div>
+                </div>
+
+                <!-- Temiz Sipariş Aksiyon Barı (Menüyü Aç & Aynısından İsterim) -->
                 <div class="plate-action-bar">
-                    <button type="button" class="btn-copy-same-plate" onclick="clonePlateForAnotherPerson(${index})" title="Bu siparişin aynısını başka biri için de ekler">
-                        <i class="fa-solid fa-user-plus"></i> 🤝 Aynısından İsterim (+1 Kişi)
+                    <button type="button" class="btn btn-sm btn-outline flex-1" onclick="openMenuForPerson(${index})" title="Geniş menü kataloğunu aç">
+                        <i class="fa-solid fa-utensils"></i> 📖 Menüden Yemek Seç
                     </button>
-                    <button type="button" class="btn-add-item-plate" onclick="promptAddItemToPlate(${index})" title="Bu tabağa yeni bir yemek veya içecek ekle">
-                        <i class="fa-solid fa-plus"></i> + Ürün / İçecek Ekle
+                    <button type="button" class="btn-copy-same-plate flex-1" onclick="clonePlateForAnotherPerson(${index})" title="Bu siparişin aynısını başka biri için de ekler">
+                        <i class="fa-solid fa-user-plus"></i> 🤝 Aynısından İsterim
                     </button>
                 </div>
 
@@ -1718,6 +2050,7 @@ window.addQuickItemToPlate = function(personIndex, name, price, emoji, type) {
         audio.init();
         audio.tick();
         renderPlatesUI();
+        broadcastPlatesChange();
     }
 };
 

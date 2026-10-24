@@ -188,62 +188,82 @@
 
                     <!-- Room Controls -->
                     <div class="room-action-buttons">
-                        <button class="btn btn-primary btn-lg btn-block" id="btnGoToOrderDirect">
-                            <i class="fa-solid fa-basket-shopping"></i> 1. Siparişleri Ver & Sepete Git
+                        <button class="btn btn-primary btn-lg btn-block" id="btnGoToMenu">
+                            <i class="fa-solid fa-utensils"></i> 1. Yemekleri Seç (Menü)
                         </button>
                         <button class="btn btn-outline btn-block mt-2" id="btnGoToWheel">
                             <i class="fa-solid fa-dharmachakra"></i> 2. Siparişçiyi Belirle (Kura / Gönüllü)
                         </button>
-                        <button class="btn btn-ghost btn-sm btn-block mt-2" id="btnOpenMenuManager">
-                            <i class="fa-solid fa-list-check"></i> Menü Fiyatlarını & Yemekleri Düzenle (<span id="menuCountBadge">10</span>)
+                        <button class="btn btn-ghost btn-block mt-2" id="btnGoToOrderDirect">
+                            <i class="fa-solid fa-basket-shopping"></i> 3. Sepet & Hesap Masası
+                        </button>
+                        <button class="btn btn-ghost btn-sm btn-block mt-2" id="btnOpenMenuManager" style="font-size: 11px;">
+                            <i class="fa-solid fa-pen-to-square"></i> Fiyat & Menü Ayarları
                         </button>
                     </div>
                 </div>
             </section>
 
             <!-- 3. FOOD MATCH SCREEN (Tinder Swipe) -->
-            <section id="screen-match" class="screen">
-                <div class="match-topbar">
-                    <button class="icon-btn" id="btnBackToLobby"><i class="fa-solid fa-chevron-left"></i></button>
-                    <div class="match-info">
-                        <h3>Mutfak / Restoran Oylaması</h3>
-                        <p>Bugün nerede yiyeceğiz? Beğendiğini sağa kaydır</p>
+            <!-- 3. FOOD CATALOG & MENU SELECTION SCREEN (YEMEK SEÇİM EKRANI) -->
+            <section id="screen-menu" class="screen">
+                <div class="menu-screen-header">
+                    <div class="flex-between align-center mb-2">
+                        <div>
+                            <span class="badge-amber"><i class="fa-solid fa-utensils"></i> LEZZET MENÜSÜ</span>
+                            <h2 style="margin: 4px 0 2px;">Ne Yemek İstersiniz?</h2>
+                            <p class="small-text text-muted">Dilediğiniz lezzet ve içecekleri porsiyonuyla tabağınıza ekleyin.</p>
+                        </div>
+                        <button class="btn btn-sm btn-outline" id="btnMenuGoToPlates">
+                            <i class="fa-solid fa-receipt"></i> Tabağıma Git
+                        </button>
                     </div>
-                    <div class="card-counter" id="cardCounter">1/10</div>
-                </div>
 
-                <!-- Swipe Deck Container -->
-                <div class="swipe-deck-container">
-                    <div class="swipe-card-wrapper" id="swipeCardWrapper">
-                        <!-- Dynamic Swipe Card Rendered via JS -->
+                    <!-- Kimin Tabağına Eklenecek? -->
+                    <div class="glass-card p-2 mb-3 flex-between align-center" style="background: rgba(30, 41, 59, 0.7);">
+                        <div style="font-size: 13px;">
+                            <i class="fa-solid fa-user-tag text-orange"></i> <strong>Sipariş Eklenen Kişi:</strong>
+                        </div>
+                        <select id="menuTargetPersonSelect" class="custom-select" style="max-width: 200px; padding: 6px 10px; font-weight: 700;">
+                            <!-- JS ile katılımcılar doldurulur -->
+                        </select>
+                    </div>
+
+                    <!-- Arama Çubuğu -->
+                    <div class="input-group mb-3">
+                        <i class="fa-solid fa-magnifying-glass input-icon"></i>
+                        <input type="text" id="menuSearchInput" placeholder="Yemek veya içecek ara (lahmacun, ayran, döner, burger)...">
+                        <button type="button" class="btn btn-xs btn-ghost" id="btnClearMenuSearch" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+
+                    <!-- Kategori Filtre Butonları -->
+                    <div class="menu-categories-scroll mb-3" id="menuCategoriesBar">
+                        <!-- JS ile kategori hapları basılır -->
                     </div>
                 </div>
 
-                <!-- Swipe Action Controls -->
-                <div class="swipe-actions">
-                    <button class="action-circle btn-reject" id="btnSwipeLeft" title="Yemem">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                    <button class="action-circle btn-undo" id="btnSwipeUndo" title="Son Seçimi Geri Al">
-                        <i class="fa-solid fa-arrow-rotate-left"></i>
-                    </button>
-                    <button class="action-circle btn-superlike" id="btnSuperLike" title="Çok İsterim!">
-                        <i class="fa-solid fa-star"></i>
-                    </button>
-                    <button class="action-circle btn-accept" id="btnSwipeRight" title="Yerim">
-                        <i class="fa-solid fa-heart"></i>
+                <!-- Yemek Kartları Listesi -->
+                <div class="menu-items-grid" id="menuItemsGrid">
+                    <!-- JS ile yemek kartları basılır -->
+                </div>
+
+                <!-- Menüde Olmayan Özel Yemek Ekle Kutusu -->
+                <div class="glass-card mt-4 p-3 text-center custom-add-box">
+                    <h4><i class="fa-solid fa-plus-circle text-orange"></i> Aradığınız Menüde Yok mu?</h4>
+                    <p class="small-text text-muted mb-2">Farklı bir lezzeti veya özel fiyatı doğrudan tabağınıza ekleyebilirsiniz:</p>
+                    <button type="button" class="btn btn-sm btn-outline" id="btnOpenCustomDishPrompt">
+                        <i class="fa-solid fa-pen"></i> + Özel Yemek & Fiyat Yazarak Ekle
                     </button>
                 </div>
 
-                <div class="finish-vote-bar">
-                    <button class="btn btn-ghost" id="btnOpenQuickAddModal">
-                        <i class="fa-solid fa-plus-circle"></i> Bu Listede Yok Mu? Kendi Seçeneğini Ekle
-                    </button>
-                    <button class="btn btn-ghost mt-2" id="btnSkipToWheel">
-                        <i class="fa-solid fa-dharmachakra"></i> Doğrudan Siparişçi Seçimine Geç
-                    </button>
-                    <button class="btn btn-outline btn-block mt-2" id="btnShowLikedChoices" style="display: none;">
-                        <i class="fa-solid fa-list-check"></i> Beğendiklerimden Karar Ver (<span id="likedCountBadge">0</span>)
+                <!-- Sabit Alt Sepet Özeti Barı -->
+                <div class="menu-sticky-cart-bar" id="menuStickyCartBar">
+                    <div class="menu-sticky-cart-info">
+                        <span class="sticky-cart-title" id="stickyTargetPersonName">Ersoy'un Tabağı</span>
+                        <span class="sticky-cart-total" id="stickyCartTotalText">0 Ürün • 0 ₺</span>
+                    </div>
+                    <button class="btn btn-primary btn-sm" id="btnStickyGoToCart">
+                        Sepete & Siparişe Git <i class="fa-solid fa-arrow-right"></i>
                     </button>
                 </div>
             </section>
@@ -514,6 +534,10 @@
             <button class="nav-tab" data-target="screen-lobby" id="tabLobby">
                 <i class="fa-solid fa-users"></i>
                 <span>Oda</span>
+            </button>
+            <button class="nav-tab" data-target="screen-menu" id="tabMenu">
+                <i class="fa-solid fa-utensils"></i>
+                <span>Yemek Seç</span>
             </button>
             <button class="nav-tab" data-target="screen-wheel" id="tabWheel">
                 <i class="fa-solid fa-dharmachakra"></i>

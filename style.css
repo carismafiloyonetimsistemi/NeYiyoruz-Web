@@ -1942,3 +1942,236 @@ body {
     font-size: 12px;
     margin: 4px 0 10px;
 }
+
+/* --- YEMEK MENÜSÜ & SEÇİM EKRANI STİLLERİ --- */
+.menu-categories-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 2px 8px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.menu-categories-scroll::-webkit-scrollbar {
+    display: none;
+}
+.menu-cat-chip {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #cbd5e1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+.menu-cat-chip:hover {
+    border-color: rgba(249, 115, 22, 0.4);
+    color: #f8fafc;
+}
+.menu-cat-chip.active {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    border-color: #f97316;
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(249, 115, 22, 0.35);
+}
+
+.menu-items-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 90px;
+}
+
+.menu-catalog-card {
+    background: rgba(30, 41, 59, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+}
+.menu-catalog-card:hover {
+    border-color: rgba(249, 115, 22, 0.35);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.catalog-card-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+.catalog-card-emoji {
+    font-size: 32px;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.catalog-card-details {
+    flex: 1;
+    min-width: 0;
+}
+.catalog-card-title {
+    margin: 0 0 2px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.catalog-card-desc {
+    display: block;
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.catalog-card-price {
+    font-size: 14px;
+    font-weight: 800;
+    color: #fbbf24;
+}
+
+.catalog-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.catalog-qty-stepper {
+    display: flex;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 2px;
+}
+.btn-catalog-qty {
+    background: transparent;
+    border: none;
+    color: #f8fafc;
+    font-size: 16px;
+    font-weight: 700;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background 0.15s;
+}
+.btn-catalog-qty:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--primary);
+}
+.catalog-qty-val {
+    min-width: 20px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+.btn-catalog-add {
+    padding: 7px 14px;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.menu-sticky-cart-bar {
+    position: fixed;
+    bottom: var(--nav-height);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: rgba(15, 23, 42, 0.96);
+    border-top: 1px solid rgba(249, 115, 22, 0.4);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 99;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
+.menu-sticky-cart-info {
+    display: flex;
+    flex-direction: column;
+}
+.sticky-cart-title {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 600;
+}
+.sticky-cart-total {
+    font-size: 14px;
+    font-weight: 800;
+    color: #fbbf24;
+}
+
+/* Hızlı Lezzet Çipleri (Tabak İçi) */
+.plate-quick-chips-box {
+    margin: 8px 0;
+    padding: 6px 0;
+    border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+.quick-chips-label {
+    font-size: 11px;
+    color: #94a3b8;
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+.plate-quick-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.quick-food-chip {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.quick-food-chip:hover {
+    border-color: var(--primary);
+    background: rgba(249, 115, 22, 0.15);
+    color: #fbbf24;
+    transform: translateY(-1px);
+}
+.quick-food-chip:active {
+    transform: scale(0.97);
+}
