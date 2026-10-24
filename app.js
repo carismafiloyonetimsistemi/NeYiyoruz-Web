@@ -1,30 +1,48 @@
 /**
- * Ne Yiyoruz? - Modern Food Decision, Wheel of Fortune & Debt Tracking App
- * Complete Logic:
- * 1. Food Management (Add / Remove custom foods)
- * 2. Volunteer Runner Selection (Direct selection or Wheel)
- * 3. Debt / Split Bill Tracking (From original project)
- * 4. Guest Mode, Tinder Swipe & Affiliate Orders
+ * Ne Yiyoruz? - Modern Food Decision, Individual Cart & Fair Debt Split App
+ * Features:
+ * 1. Food / Restaurant Category Decision (Swipe Match)
+ * 2. Individual Plates & Custom Dishes per Person (Adana Kebap vs Kuzu Şiş vs Çorba)
+ * 3. Fair Split Bill (Kimin ne kadar yediği kuruşu kuruşuna adaletli hesaplanır)
+ * 4. WhatsApp / Delivery Order List Copying (Sipariş Notu Tek Tıkla Kopyalanır)
+ * 5. Volunteer Runner / Orderer Selection
+ * 6. Debt Tracking Book (Kim kime ne kadar borçlu geçmişi)
  */
 
-// --- 1. DEFAULT FOOD DATASET ---
+// --- 1. DEFAULT RESTAURANTS / CUISINES DATASET ---
 const DEFAULT_FOODS = [
-    { id: 1, name: 'Karışık Pizza', category: 'İtalyan / Fast Food', emoji: '🍕', price: '240 ₺', desc: 'İnce hamur, bol mozzarella, sucuk ve mantar' },
-    { id: 2, name: 'Çıtır Lahmacun', category: 'Geleneksel / Taş Fırın', emoji: '🥩', price: '120 ₺', desc: 'Bol yeşillik ve buz gibi köpüklü ayran ile' },
-    { id: 3, name: 'Smash Burger', category: 'Amerikan / Fast Food', emoji: '🍔', price: '260 ₺', desc: 'Karamelize soğan, trüflü mayonez ve çıtır patates' },
-    { id: 4, name: 'Hatay Usulü Döner', category: 'Döner / Sokak Lezzeti', emoji: '🌯', price: '180 ₺', desc: 'Özel sarımsaklı mayonez ve patatesli soslu dürüm' },
-    { id: 5, name: 'Kayseri Mantısı', category: 'Ev Yemekleri', emoji: '🥟', price: '210 ₺', desc: 'Sarımsaklı yoğurt ve naneli tereyağı sosuyla' },
-    { id: 6, name: 'Adana Kebap', category: 'Ocakbaşı', emoji: '🍢', price: '320 ₺', desc: 'Közlenmiş biber, domates ve sıcak lavaş eşliğinde' },
-    { id: 7, name: 'Sushi & Roll', category: 'Uzak Doğu', emoji: '🍣', price: '380 ₺', desc: 'Somon, avokado ve çıtır tempura roll' },
-    { id: 8, name: 'Etli Çiğ Köfte Dürüm', category: 'Pratik / Çiğ Köfte', emoji: '🥬', price: '110 ₺', desc: 'Bol nar ekşisi, marul ve acı sos' },
-    { id: 9, name: 'Günün Ev Yemeği Menüsü', category: 'Sağlıklı / Anne Yemeği', emoji: '🍲', price: '175 ₺', desc: 'Mercimek çorbası, kuru fasulye ve tane tane pirinç pilavı' },
-    { id: 10, name: 'Sıcak Sufle & Dondurma', category: 'Tatlı Kapanış', emoji: '🍫', price: '160 ₺', desc: 'Akışkan Belçika çikolatası ve vanilyalı dondurma' },
+    { id: 1, name: 'Kebap & Ocakbaşı', category: 'Geleneksel / Ocakbaşı', emoji: '🍢', price: '320 ₺', desc: 'Adana kebap, kuzu şiş, beyti, lahmacun ve meze' },
+    { id: 2, name: 'Pizza & İtalyan', category: 'İtalyan / Fast Food', emoji: '🍕', price: '240 ₺', desc: 'İnce hamur karışık pizza, mantarlı, 4 peynirli' },
+    { id: 3, name: 'Gurme Burger & Patates', category: 'Amerikan / Fast Food', emoji: '🍔', price: '260 ₺', desc: 'Smash burger, trüflü patates ve çıtır tavuk' },
+    { id: 4, name: 'Hatay & Yaprak Döner', category: 'Döner / Sokak Lezzeti', emoji: '🌯', price: '180 ₺', desc: 'Özel soslu lavaş dürüm, iskender ve tombik' },
+    { id: 5, name: 'Geleneksel Ev Yemekleri', category: 'Ev Yemekleri / Çorba', emoji: '🍲', price: '160 ₺', desc: 'Mercimek çorbası, kurufasulye, mantı, pilav' },
+    { id: 6, name: 'Sushi & Uzak Doğu', category: 'Asya Mutfağı', emoji: '🍣', price: '380 ₺', desc: 'Roll çeşitleri, noodle ve çıtır karides' },
+    { id: 7, name: 'Taş Fırın Pide & Lahmacun', category: 'Pide & Taş Fırın', emoji: '🥩', price: '130 ₺', desc: 'Kıymalı, kaşarlı, kuşbaşılı pide ve lahmacun' },
+    { id: 8, name: 'Çiğ Köfte & Dürüm', category: 'Pratik / Çiğ Köfte', emoji: '🥬', price: '110 ₺', desc: 'Bol nar ekşisi, yeşillik ve acı soslu dürüm' },
+    { id: 9, name: 'Tavuk Dünyası & Makarnalar', category: 'Tavuk / Bistro', emoji: '🍗', price: '220 ₺', desc: 'Kekikli tavuk, kremalı makarna ve akdeniz salatası' },
+    { id: 10, name: 'Tatlı & Kahve Kapanışı', category: 'Tatlı / Kafe', emoji: '🍫', price: '150 ₺', desc: 'Sıcak sufle, waffle, baklava ve dondurma' },
 ];
+
+// Default sample dishes based on selected cuisine
+const SAMPLE_DISHES = {
+    'Kebap & Ocakbaşı': [
+        { dish: 'Adana Kebap (Tek Lavaş) + Şalgam', price: 340 },
+        { dish: 'Kuzu Şiş Porsiyon + Ayran', price: 410 },
+        { dish: 'Mercimek Çorbası + 2 Lahmacun', price: 260 },
+        { dish: 'Beyti Sarma + Kola', price: 380 },
+    ],
+    'default': [
+        { dish: 'Ana Menü + İçecek', price: 250 },
+        { dish: 'Dürüm / Tek Porsiyon + Ayran', price: 180 },
+        { dish: 'Çorba / Hafif Menü', price: 140 },
+        { dish: 'Büyük Boy Menü + Tatlı', price: 320 },
+    ]
+};
 
 // --- 2. GLOBAL STATE ---
 const state = {
     user: null, // { name: 'Ersoy', avatar: '😎', isGuest: true }
-    room: null, // { code: '4821', title: 'Ofis Grubu', participants: ['Ersoy', 'Can', 'Ayşe'] }
+    room: null, // { code: '4821', title: 'Ofis Grubu', participants: ['Ersoy', 'Ahmet', 'Can'] }
     foods: JSON.parse(localStorage.getItem('neyiyoruz_custom_foods')) || DEFAULT_FOODS,
     currentCardIndex: 0,
     acceptedFoods: [],
@@ -32,9 +50,9 @@ const state = {
     runner: null,
     wheelAngle: 0,
     isSpinning: false,
-    // Debt & logistics state (from original project)
-    totalBill: 600,
-    debtStatus: {}, // { 'Ahmet': true, 'Can': false } (true = paid, false = owes)
+    // Individual plates & Split bill
+    splitMode: 'individual', // 'individual' or 'equal'
+    plates: [], // [ { person: 'Ersoy', dish: 'Adana Kebap', price: 340, paid: false } ]
     debtsHistory: JSON.parse(localStorage.getItem('neyiyoruz_debts_history')) || [],
 };
 
@@ -124,14 +142,20 @@ const els = {
     runnerResultBox: document.getElementById('runnerResultBox'),
     runnerName: document.getElementById('runnerName'),
     btnProceedToOrder: document.getElementById('btnProceedToOrder'),
-    // Result & Debt
+    // Result & Plates
     finalFoodTitle: document.getElementById('finalFoodTitle'),
     winnerFoodEmoji: document.getElementById('winnerFoodEmoji'),
     winnerFoodName: document.getElementById('winnerFoodName'),
     summaryRunnerName: document.getElementById('summaryRunnerName'),
-    totalBillInput: document.getElementById('totalBillInput'),
-    perPersonAmount: document.getElementById('perPersonAmount'),
-    debtCheckboxesContainer: document.getElementById('debtCheckboxesContainer'),
+    btnModeIndividual: document.getElementById('btnModeIndividual'),
+    btnModeEqual: document.getElementById('btnModeEqual'),
+    individualPlatesContainer: document.getElementById('individualPlatesContainer'),
+    equalModeContainer: document.getElementById('equalModeContainer'),
+    equalTotalInput: document.getElementById('equalTotalInput'),
+    totalCartAmount: document.getElementById('totalCartAmount'),
+    cartRunnerDisplay: document.getElementById('cartRunnerDisplay'),
+    btnCopyOrderNote: document.getElementById('btnCopyOrderNote'),
+    orderNoteCopiedNotice: document.getElementById('orderNoteCopiedNotice'),
     btnSaveDebtSummary: document.getElementById('btnSaveDebtSummary'),
     debtSavedNotice: document.getElementById('debtSavedNotice'),
     // History & Debt Summary
@@ -196,7 +220,6 @@ function loginAsGuest(name) {
     };
     localStorage.setItem('neyiyoruz_user', JSON.stringify(state.user));
 
-    // Update UI
     els.displayUsername.innerText = state.user.name;
     els.userAvatar.innerText = state.user.avatar;
     els.userBadge.style.display = 'flex';
@@ -277,7 +300,7 @@ els.btnJoinRoom.addEventListener('click', () => {
 els.btnShareWhatsApp.addEventListener('click', () => {
     if (!state.room) return;
     const shareUrl = `${window.location.origin}${window.location.pathname}?room=${state.room.code}`;
-    const text = encodeURIComponent(`🍕 Ne Yiyoruz? uygulamasına katıl, bugün ne yiyeceğimizi birlikte oylayalım!\n\nOda Kodu: ${state.room.code}\nKatılmak için tıkla: ${shareUrl}`);
+    const text = encodeURIComponent(`🍕 Ne Yiyoruz? uygulamasına katıl, bugün hangi restoranda ne yiyeceğimizi birlikte seçelim!\n\nOda Kodu: ${state.room.code}\nKatılmak için tıkla: ${shareUrl}`);
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
 });
 
@@ -292,7 +315,7 @@ els.btnBackToLobby.addEventListener('click', () => {
     navigateTo('screen-lobby');
 });
 
-// --- 8. YEMEK EKLEME & ÇIKARMA (MENU MANAGER) ---
+// --- 8. YEMEK & MUTFAK YÖNETİMİ ---
 function renderFoodManageList() {
     els.foodItemsManageList.innerHTML = state.foods.map(item => `
         <div class="food-manage-item">
@@ -314,7 +337,7 @@ function renderFoodManageList() {
 
 window.deleteFoodItem = function(id) {
     if (state.foods.length <= 2) {
-        alert('Oylama için en az 2 yemek kalmalıdır.');
+        alert('Oylama için en az 2 seçenek kalmalıdır.');
         return;
     }
     state.foods = state.foods.filter(f => f.id !== id);
@@ -324,18 +347,18 @@ window.deleteFoodItem = function(id) {
 
 els.btnAddFoodItem.addEventListener('click', () => {
     const name = els.newFoodNameInput.value.trim();
-    const category = els.newFoodCategoryInput.value.trim() || 'Özel Seçim';
+    const category = els.newFoodCategoryInput.value.trim() || 'Özel Restoran';
     const emoji = els.newFoodEmojiInput.value.trim() || '🍽️';
 
-    if (!name) return alert('Lütfen yemek adını yazınız.');
+    if (!name) return alert('Lütfen restoran/yemek adını yazınız.');
 
     const newFood = {
         id: Date.now(),
         name: name,
         category: category,
         emoji: emoji,
-        price: '200 ₺',
-        desc: 'Grup tarafından özel eklenen lezzet'
+        price: '220 ₺',
+        desc: 'Grup tarafından özel eklenen seçenek'
     };
 
     state.foods.unshift(newFood);
@@ -346,7 +369,7 @@ els.btnAddFoodItem.addEventListener('click', () => {
     els.newFoodEmojiInput.value = '';
 
     renderFoodManageList();
-    alert(`"${name}" menüye eklendi!`);
+    alert(`"${name}" listeye eklendi!`);
 });
 
 els.btnOpenMenuManager.addEventListener('click', () => {
@@ -363,7 +386,7 @@ els.btnCloseMenuManager.addEventListener('click', () => {
     els.menuManagerModal.classList.remove('active');
 });
 
-// --- 9. TINDER-STYLE FOOD MATCH (SWIPE) ---
+// --- 9. TINDER-STYLE CUISINE / RESTAURANT MATCH (SWIPE) ---
 function renderCurrentCard() {
     if (state.currentCardIndex >= state.foods.length) {
         finishFoodMatch();
@@ -495,7 +518,6 @@ function populateVolunteerSelect() {
         participants.map(p => `<option value="${p}">${p}</option>`).join('');
 }
 
-// Gönüllü Biri Varsa Doğrudan Seç
 els.btnVolunteerMyself.addEventListener('click', () => {
     const myName = state.user ? state.user.name : 'Ersoy';
     selectRunnerDirectly(myName);
@@ -513,7 +535,6 @@ function selectRunnerDirectly(runnerPerson) {
     showRunnerResult(runnerPerson);
 }
 
-// Çarkıfelek Canvas Çizimi
 function drawWheel() {
     const canvas = els.wheelCanvas;
     if (!canvas) return;
@@ -636,7 +657,7 @@ els.btnProceedToOrder.addEventListener('click', () => {
     navigateTo('screen-result');
 });
 
-// --- 11. RESULT & DEBT / SPLIT BILL MODULE (Orijinal Kodlarınız Entegre Edildi) ---
+// --- 11. BİREYSEL TABAKLAR & ADALETLİ HESAP BÖLÜŞÜMÜ (INDIVIDUAL PLATES & FAIR SPLIT) ---
 function renderResultScreen() {
     const food = state.winnerFood || state.foods[0];
     const runner = state.runner || (state.user ? state.user.name : 'Ersoy');
@@ -645,6 +666,7 @@ function renderResultScreen() {
     els.winnerFoodEmoji.innerText = food.emoji;
     els.winnerFoodName.innerText = food.name;
     els.summaryRunnerName.innerText = runner;
+    els.cartRunnerDisplay.innerText = runner;
 
     // Generate Affiliate Search Links
     const query = encodeURIComponent(food.name.replace(/[^a-zA-Z0-9ığüşöçİĞÜŞÖÇ ]/g, ''));
@@ -654,64 +676,160 @@ function renderResultScreen() {
     els.linkTrendyol.href = `https://www.trendyol.com/sr?q=${query}&ty_aff=${affId}`;
     els.linkGetir.href = `https://getir.com/yemek/ara/?q=${query}&utm_source=neyiyoruz`;
 
-    renderDebtSplitter();
+    setupPlatesData();
+    renderPlatesUI();
 }
 
-function renderDebtSplitter() {
+function setupPlatesData() {
     const participants = state.room ? state.room.participants : ['Ersoy', 'Ahmet', 'Can'];
-    const total = parseFloat(els.totalBillInput.value) || 0;
-    const count = participants.length || 1;
-    const perPerson = Math.round(total / count);
+    const cuisine = state.winnerFood ? state.winnerFood.name : 'default';
+    const samples = SAMPLE_DISHES[cuisine] || SAMPLE_DISHES['default'];
 
-    els.perPersonAmount.innerText = `${perPerson} ₺`;
-
-    // Initialize Debt Status if empty
-    participants.forEach(p => {
-        if (state.debtStatus[p] === undefined) {
-            // Runner is the one who pays the bill, others owe to runner
-            state.debtStatus[p] = (p === state.runner);
-        }
-    });
-
-    els.debtCheckboxesContainer.innerHTML = participants.map(p => {
-        const isPaid = state.debtStatus[p];
-        const isRunner = (p === state.runner);
-        return `
-            <div class="debt-person-row">
-                <div class="debt-person-left">
-                    <i class="fa-solid fa-user text-orange"></i>
-                    <span>${p} ${isRunner ? '<strong style="color:#fbbf24;">(Siparişçi / Ödeyen)</strong>' : ''}</span>
-                </div>
-                <button class="debt-status-btn ${isPaid ? 'status-paid' : 'status-debt'}" onclick="togglePersonDebt('${p}')">
-                    ${isPaid ? '✓ Ödedi' : '❌ Borçlu (' + perPerson + ' ₺)'}
-                </button>
-            </div>
-        `;
-    }).join('');
+    if (state.plates.length !== participants.length) {
+        state.plates = participants.map((person, idx) => {
+            const sample = samples[idx % samples.length];
+            const isRunner = (person === state.runner);
+            return {
+                person: person,
+                dish: sample.dish,
+                price: sample.price,
+                paid: isRunner, // Runner already paid for everyone
+                isRunner: isRunner,
+            };
+        });
+    }
 }
 
-els.totalBillInput.addEventListener('input', () => {
-    renderDebtSplitter();
+function renderPlatesUI() {
+    if (state.splitMode === 'individual') {
+        els.individualPlatesContainer.style.display = 'flex';
+        els.equalModeContainer.style.display = 'none';
+
+        els.individualPlatesContainer.innerHTML = state.plates.map((plate, index) => `
+            <div class="individual-plate-item">
+                <div class="plate-user-header">
+                    <div class="plate-user-title">
+                        <i class="fa-solid fa-user-circle text-orange"></i>
+                        <span>${plate.person} ${plate.isRunner ? '<span style="color:#fbbf24; font-size:12px;">(Siparişçi / Ödeyen)</span>' : ''}</span>
+                    </div>
+                </div>
+
+                <div class="plate-inputs-row">
+                    <input type="text" class="plate-dish-input" value="${plate.dish}" placeholder="Yiyeceği yemek..." 
+                           onchange="updatePlateDish(${index}, this.value)">
+                    <input type="number" class="plate-price-input" value="${plate.price}" placeholder="Tutar ₺" 
+                           oninput="updatePlatePrice(${index}, this.value)">
+                </div>
+
+                <div class="plate-status-row">
+                    <button class="debt-status-btn ${plate.paid ? 'status-paid' : 'status-debt'}" onclick="togglePlatePaid(${index})">
+                        ${plate.paid ? '✓ Ödedi' : '❌ Borçlu (' + plate.price + ' ₺)'}
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        // Compute Total Cart
+        const total = state.plates.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
+        els.totalCartAmount.innerText = `${total} ₺`;
+    } else {
+        // Equal Split Mode
+        els.individualPlatesContainer.style.display = 'none';
+        els.equalModeContainer.style.display = 'block';
+
+        const equalTotal = parseFloat(els.equalTotalInput.value) || 0;
+        const count = state.plates.length || 1;
+        const perPerson = Math.round(equalTotal / count);
+
+        els.totalCartAmount.innerText = `${equalTotal} ₺ (Kişi başı: ${perPerson} ₺)`;
+    }
+}
+
+// Mode Toggles
+els.btnModeIndividual.addEventListener('click', () => {
+    state.splitMode = 'individual';
+    els.btnModeIndividual.classList.add('active');
+    els.btnModeEqual.classList.remove('active');
+    renderPlatesUI();
 });
 
-window.togglePersonDebt = function(person) {
-    state.debtStatus[person] = !state.debtStatus[person];
-    renderDebtSplitter();
+els.btnModeEqual.addEventListener('click', () => {
+    state.splitMode = 'equal';
+    els.btnModeEqual.classList.add('active');
+    els.btnModeIndividual.classList.remove('active');
+    renderPlatesUI();
+});
+
+els.equalTotalInput.addEventListener('input', () => {
+    renderPlatesUI();
+});
+
+window.updatePlateDish = function(index, value) {
+    if (state.plates[index]) {
+        state.plates[index].dish = value;
+    }
 };
 
+window.updatePlatePrice = function(index, value) {
+    if (state.plates[index]) {
+        state.plates[index].price = parseFloat(value) || 0;
+        renderPlatesUI();
+    }
+};
+
+window.togglePlatePaid = function(index) {
+    if (state.plates[index]) {
+        state.plates[index].paid = !state.plates[index].paid;
+        renderPlatesUI();
+    }
+};
+
+// --- SIPARIS LISTESI & NOTUNU KOPYALA ---
+els.btnCopyOrderNote = function() {
+    const runner = state.runner || 'Ersoy';
+    const cuisine = state.winnerFood ? state.winnerFood.name : 'Yemek';
+    
+    let text = `📋 Ne Yiyoruz Sipariş Özeti (${cuisine}):\n`;
+    text += `Siparişi Veren: ${runner}\n`;
+    text += `---------------------------------\n`;
+
+    let total = 0;
+    state.plates.forEach(p => {
+        text += `• ${p.person}: ${p.dish} (${p.price} ₺)\n`;
+        total += parseFloat(p.price) || 0;
+    });
+
+    text += `---------------------------------\n`;
+    text += `TOPLAM HESAP: ${total} ₺\n`;
+    text += `Borçlular: ${state.plates.filter(p => !p.paid && !p.isRunner).map(p => p.person + ' (' + p.price + ' ₺)').join(', ') || 'Yok (Herkes Ödedi)'}`;
+
+    navigator.clipboard.writeText(text).then(() => {
+        els.orderNoteCopiedNotice.style.display = 'block';
+        setTimeout(() => {
+            els.orderNoteCopiedNotice.style.display = 'none';
+        }, 3000);
+    });
+};
+document.getElementById('btnCopyOrderNote').addEventListener('click', els.btnCopyOrderNote);
+
+// --- BORCLARI KAYDET ---
 els.btnSaveDebtSummary.addEventListener('click', () => {
-    const participants = state.room ? state.room.participants : ['Ersoy', 'Ahmet', 'Can'];
-    const total = parseFloat(els.totalBillInput.value) || 0;
-    const perPerson = Math.round(total / (participants.length || 1));
+    const runner = state.runner || 'Ersoy';
+    const total = state.plates.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
 
     const record = {
         id: Date.now(),
         date: new Date().toLocaleDateString('tr-TR'),
-        food: state.winnerFood ? state.winnerFood.name : 'Yemek',
-        runner: state.runner || 'Ersoy',
+        cuisine: state.winnerFood ? state.winnerFood.name : 'Yemek',
+        runner: runner,
         total: total,
-        perPerson: perPerson,
-        statuses: { ...state.debtStatus },
+        plates: state.plates.map(p => ({
+            person: p.person,
+            dish: p.dish,
+            price: p.price,
+            paid: p.paid,
+            isRunner: p.isRunner
+        })),
     };
 
     state.debtsHistory.unshift(record);
@@ -725,13 +843,15 @@ els.btnSaveDebtSummary.addEventListener('click', () => {
 
 // --- 12. HISTORY & DEBT SCREEN RENDERING ---
 function renderHistoryScreen() {
-    // 1. Calculate Active Debts
-    const unpaidMap = {};
+    // 1. Calculate Active Debts based on individual plates
+    const unpaidMap = {}; // { 'Ersoy': { to: 'Ahmet', amount: 340 } }
+
     state.debtsHistory.forEach(record => {
-        Object.entries(record.statuses).forEach(([person, isPaid]) => {
-            if (!isPaid && person !== record.runner) {
-                if (!unpaidMap[person]) unpaidMap[person] = 0;
-                unpaidMap[person] += record.perPerson;
+        record.plates.forEach(p => {
+            if (!p.paid && !p.isRunner) {
+                const key = `${p.person} ➔ ${record.runner}`;
+                if (!unpaidMap[key]) unpaidMap[key] = 0;
+                unpaidMap[key] += p.price;
             }
         });
     });
@@ -744,27 +864,29 @@ function renderHistoryScreen() {
             </div>
         `;
     } else {
-        els.activeDebtSummaryBox.innerHTML = debtEntries.map(([person, debt]) => `
+        els.activeDebtSummaryBox.innerHTML = debtEntries.map(([debtPair, amount]) => `
             <div class="debt-summary-item">
-                <span><strong>${person}</strong></span>
-                <span class="debt-badge-red">${debt} ₺ Borcu Var</span>
+                <span><strong>${debtPair}</strong></span>
+                <span class="debt-badge-red">${amount} ₺ Borç</span>
             </div>
         `).join('');
     }
 
-    // 2. Voting & Session History
+    // 2. Voting & Session History with Plate Breakdown
     if (state.debtsHistory.length === 0) {
         els.votingHistoryList.innerHTML = `
-            <div class="small-text text-center py-2">Henüz kaydedilmiş bir oylama geçmişi yok.</div>
+            <div class="small-text text-center py-2">Henüz kaydedilmiş bir sipariş geçmişi yok.</div>
         `;
     } else {
         els.votingHistoryList.innerHTML = state.debtsHistory.map(h => `
             <div class="history-item">
                 <div class="history-left">
-                    <strong>${h.food} (${h.total} ₺)</strong>
-                    <span>Tarih: ${h.date} • Siparişçi: ${h.runner} • Kişi Başı: ${h.perPerson} ₺</span>
+                    <strong>${h.cuisine} (${h.total} ₺)</strong>
+                    <span>Tarih: ${h.date} • Siparişçi: ${h.runner}</span>
                 </div>
-                <span class="chip" style="font-size:11px;">Tamamlandı</span>
+                <div class="history-breakdown">
+                    ${h.plates.map(p => `• ${p.person}: ${p.dish} (${p.price} ₺) [${p.paid ? 'Ödedi' : 'Borçlu'}]`).join('<br>')}
+                </div>
             </div>
         `).join('');
     }
@@ -785,7 +907,7 @@ els.btnNewRound.addEventListener('click', () => {
     state.currentCardIndex = 0;
     state.acceptedFoods = [];
     state.runner = null;
-    state.debtStatus = {};
+    state.plates = [];
     navigateTo('screen-lobby');
 });
 

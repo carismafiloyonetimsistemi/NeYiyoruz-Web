@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ne Yiyoruz? - Arkadaş Grubu Yemek Karar & Çarkıfelek Uygulaması</title>
-    <meta name="description" content="Bugün ne yesek derdine son! Arkadaşlarınla oda kur, yemekleri oyla, borçları takip et ve siparişi kimin vereceğini belirle.">
+    <title>Ne Yiyoruz? - Arkadaş Grubu Yemek Karar, Sepet & Borç Defteri</title>
+    <meta name="description" content="Bugün ne yesek derdine son! Mutfakta anlaş, herkes kendi siparişini ve fiyatını girsin, adaletli hesap bölüşümü ve borç takibi tek tıkla yapılsın.">
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -52,7 +52,7 @@
                 <div class="auth-hero">
                     <div class="hero-badge">🚀 Karar Vermek Artık Çok Kolay</div>
                     <h1 class="hero-title">Bugün Ne Yiyoruz Tartışmasına <span class="text-gradient">Son Ver!</span></h1>
-                    <p class="hero-desc">Arkadaş grubunla oda kur, yemekleri oyla, hesapları bölüş ve borçları kolayca takip et!</p>
+                    <p class="hero-desc">Restoranda anlaş, herkes tabağını seçsin, kuruşu kuruşuna adaletli hesap bölüşülsün!</p>
                 </div>
 
                 <div class="glass-card auth-card">
@@ -100,7 +100,7 @@
                         <p>Odayı sen kur, linki WhatsApp'tan arkadaşlarına gönder.</p>
                         <div class="input-group mt-3">
                             <i class="fa-solid fa-utensils input-icon"></i>
-                            <input type="text" id="createRoomNameInput" placeholder="Oda Adı (Örn: Ofis Ekibi, Pazar Yemeği)">
+                            <input type="text" id="createRoomNameInput" placeholder="Oda Adı (Örn: Kebap Ziyafeti, Ofis Ekibi)">
                         </div>
                         <button class="btn btn-primary btn-block mt-3" id="btnCreateRoom">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> Odayı Kur & Başlat
@@ -150,10 +150,10 @@
                     <!-- Room Controls -->
                     <div class="room-action-buttons">
                         <button class="btn btn-primary btn-lg btn-block" id="btnStartMatching">
-                            <i class="fa-solid fa-fire"></i> Yemek Eşleşmesini (Swipe) Başlat
+                            <i class="fa-solid fa-fire"></i> 1. Restoran / Mutfak Seçimini Başlat
                         </button>
                         <button class="btn btn-outline btn-block mt-2" id="btnOpenMenuManager">
-                            <i class="fa-solid fa-list-check"></i> Yemekleri Yönet / Yeni Yemek Ekle (<span id="menuCountBadge">10</span>)
+                            <i class="fa-solid fa-list-check"></i> Seçenekleri Düzenle (<span id="menuCountBadge">10</span>)
                         </button>
                     </div>
                 </div>
@@ -164,8 +164,8 @@
                 <div class="match-topbar">
                     <button class="icon-btn" id="btnBackToLobby"><i class="fa-solid fa-chevron-left"></i></button>
                     <div class="match-info">
-                        <h3>Yemek Eşleşmesi</h3>
-                        <p>Beğendiğini sağa, istemediğini sola kaydır</p>
+                        <h3>Mutfak / Restoran Oylaması</h3>
+                        <p>Bugün nerede yiyeceğiz? Beğendiğini sağa kaydır</p>
                     </div>
                     <div class="card-counter" id="cardCounter">1/10</div>
                 </div>
@@ -192,7 +192,7 @@
 
                 <div class="finish-vote-bar">
                     <button class="btn btn-ghost" id="btnOpenQuickAddModal">
-                        <i class="fa-solid fa-plus-circle"></i> Bu Listede Yok Mu? Kendi Yemeğini Ekle
+                        <i class="fa-solid fa-plus-circle"></i> Bu Listede Yok Mu? Kendi Seçeneğini Ekle
                     </button>
                     <button class="btn btn-ghost mt-2" id="btnSkipToWheel">
                         <i class="fa-solid fa-dharmachakra"></i> Doğrudan Siparişçi Seçimine Geç
@@ -204,17 +204,17 @@
             <section id="screen-wheel" class="screen">
                 <div class="wheel-header text-center">
                     <span class="badge-amber">🏃 SİPARİŞÇİ BELİRLEME</span>
-                    <h2>Siparişi Kim Verecek?</h2>
-                    <p>İster çarkıfelekle kura çek, ister gönüllü olanı doğrudan seç!</p>
+                    <h2>Siparişi Kim Toplayacak?</h2>
+                    <p>İster kura çekin, ister gönüllü olanı doğrudan siparişçi yapın!</p>
                 </div>
 
-                <!-- GÖNÜLLÜ SEÇİM KUTUSU (Yeni Eklendi) -->
+                <!-- GÖNÜLLÜ SEÇİM KUTUSU -->
                 <div class="glass-card volunteer-card mb-3">
                     <div class="volunteer-header">
                         <i class="fa-solid fa-hand-holding-heart text-orange"></i>
                         <strong>Gönüllü Biri Var mı?</strong>
                     </div>
-                    <p class="small-text mb-2">Biri "Ben siparişi veririm" diyorsa kura çekmeye gerek yok:</p>
+                    <p class="small-text mb-2">Biri "Siparişi ben veririm" diyorsa kura çekmeye gerek yok:</p>
                     
                     <div class="volunteer-row">
                         <button class="btn btn-sm btn-outline flex-1" id="btnVolunteerMyself">
@@ -242,68 +242,83 @@
                 <div id="runnerResultBox" class="glass-card runner-winner-card mt-3" style="display: none;">
                     <div class="runner-trophy">🎉</div>
                     <h3>Günün Siparişçisi: <span id="runnerName" class="text-orange">Ahmet</span>!</h3>
-                    <p>Siparişi uygulamadan vermek ve kapıyı karşılamak onun görevi!</p>
+                    <p>Siparişleri toplamak, uygulamadan vermek ve teslim almak onun görevi!</p>
                     <button class="btn btn-success btn-block mt-3" id="btnProceedToOrder">
-                        <i class="fa-solid fa-receipt"></i> Sipariş & Borç Takibi Ekranına Git
+                        <i class="fa-solid fa-basket-shopping"></i> Bireysel Sipariş & Sepet Ekranına Git
                     </button>
                 </div>
             </section>
 
-            <!-- 5. RESULT & DEBT (BORÇ/ALACAK) & AFFILIATE ORDER SCREEN -->
+            <!-- 5. RESULT & INDIVIDUAL PLATES & FAIR DEBT SPLIT SCREEN -->
             <section id="screen-result" class="screen">
                 <div class="result-header text-center">
-                    <span class="badge-green">🏆 BUGÜNKÜ MENÜ SEÇİLDİ</span>
-                    <h2 id="finalFoodTitle">Nefis Karışık Pizza</h2>
-                    <p>Oylama sonuçlandı! Siparişi ver ve borçları buradan kolayca bölüş:</p>
+                    <span class="badge-green">🏆 MUTFAK SEÇİLDİ</span>
+                    <h2 id="finalFoodTitle">Kebap & Türk Mutfağı!</h2>
+                    <p>Mutfakta anlaşıldı! Şimdi herkes kendi tabağını ve tutarını belirlesin:</p>
                 </div>
 
-                <!-- Winner Food Spotlight Card -->
+                <!-- Winner Spotlight Card -->
                 <div class="glass-card winner-spotlight">
-                    <div class="winner-img-box" id="winnerFoodEmoji">🍕</div>
+                    <div class="winner-img-box" id="winnerFoodEmoji">🍢</div>
                     <div class="winner-details">
-                        <h3 id="winnerFoodName">Büyük Boy İtalyan Pizza</h3>
-                        <p class="winner-tag">🔥 Grupta En Çok Oyu Alan Lezzet</p>
+                        <h3 id="winnerFoodName">Kebap Ziyafeti</h3>
+                        <p class="winner-tag">🔥 Grubun Ortak Kararı</p>
                         <div class="runner-badge-pill">
                             <i class="fa-solid fa-person-running"></i> Siparişi Veren: <strong id="summaryRunnerName">Ersoy</strong>
                         </div>
                     </div>
                 </div>
 
-                <!-- BORÇ VE HESAP BÖLÜŞME MODÜLÜ (Orijinal Projeniz Geri Getirildi) -->
-                <div class="glass-card debt-card mb-4">
-                    <div class="debt-header">
-                        <div class="debt-icon-title">
-                            <i class="fa-solid fa-scale-balanced text-orange"></i>
-                            <div>
-                                <h3>Hesap Bölüşme & Borç Defteri</h3>
-                                <p class="small-text">Siparişi veren kişiye kim ne kadar ödeyecek?</p>
-                            </div>
+                <!-- BİREYSEL TABAKLAR & SEPET SİSTEMİ (Yeni Çözüm) -->
+                <div class="glass-card plates-card mb-4">
+                    <div class="plates-header">
+                        <div class="split-mode-toggle">
+                            <button class="toggle-mode-btn active" id="btnModeIndividual">
+                                <i class="fa-solid fa-user-tag"></i> Herkes Kendi Tabağını Ödesin (Adaletli)
+                            </button>
+                            <button class="toggle-mode-btn" id="btnModeEqual">
+                                <i class="fa-solid fa-users"></i> Eşit Bölüş
+                            </button>
                         </div>
                     </div>
 
-                    <div class="bill-input-row mt-3">
-                        <div class="bill-input-box">
-                            <label>Toplam Hesap Tutarı (₺)</label>
-                            <input type="number" id="totalBillInput" placeholder="Örn: 600" value="600">
-                        </div>
-                        <div class="split-result-box">
-                            <label>Kişi Başı Düşen</label>
-                            <span class="per-person-amount" id="perPersonAmount">200 ₺</span>
+                    <!-- Individual Plates Container -->
+                    <div id="individualPlatesContainer" class="individual-plates-list mt-3">
+                        <!-- Dynamic via JS: Each person has their chosen item + price -->
+                    </div>
+
+                    <!-- Equal Mode Container (Hidden by default) -->
+                    <div id="equalModeContainer" class="equal-mode-box mt-3" style="display: none;">
+                        <div class="input-group">
+                            <i class="fa-solid fa-receipt input-icon"></i>
+                            <input type="number" id="equalTotalInput" placeholder="Toplam Hesap Tutarı (₺)" value="600">
                         </div>
                     </div>
 
-                    <div class="debt-participants-list mt-3">
-                        <label class="list-label">Ödeme Durumları (İşaretleyin):</label>
-                        <div id="debtCheckboxesContainer" class="debt-checkbox-grid">
-                            <!-- Injected dynamically via JS -->
+                    <!-- Total Cart Calculation Box -->
+                    <div class="cart-summary-box mt-3">
+                        <div class="cart-summary-row">
+                            <span>Toplam Hesap:</span>
+                            <strong class="total-cart-amount" id="totalCartAmount">0 ₺</strong>
+                        </div>
+                        <div class="cart-runner-note">
+                            Siparişi ödeyecek kişi: <strong id="cartRunnerDisplay" class="text-orange">Ersoy</strong>
                         </div>
                     </div>
 
-                    <button class="btn btn-outline btn-block mt-3" id="btnSaveDebtSummary">
-                        <i class="fa-solid fa-floppy-disk"></i> Borç Durumunu Kaydet
+                    <!-- Copy Order Note Button for Delivery App -->
+                    <button class="btn btn-whatsapp btn-block mt-3" id="btnCopyOrderNote">
+                        <i class="fa-solid fa-copy"></i> Sipariş Listesini Kopyala (WhatsApp / Restoran)
+                    </button>
+                    <div id="orderNoteCopiedNotice" class="saved-notice" style="display: none;">
+                        ✓ Liste panoya kopyalandı! Sipariş ekranına veya WhatsApp'a yapıştırabilirsiniz.
+                    </div>
+
+                    <button class="btn btn-outline btn-block mt-2" id="btnSaveDebtSummary">
+                        <i class="fa-solid fa-floppy-disk"></i> Borçları Borç Defterine Kaydet
                     </button>
                     <div id="debtSavedNotice" class="saved-notice" style="display: none;">
-                        ✓ Borçlar kaydedildi! Profil / Geçmiş sekmesinden takip edebilirsiniz.
+                        ✓ Borçlar kaydedildi! Kimin kime ne kadar ödeyeceği Geçmiş sekmesine işlendi.
                     </div>
                 </div>
 
@@ -368,22 +383,22 @@
                 </div>
             </section>
 
-            <!-- 6. GEÇMİŞ & BORÇ TAKİBİ EKRANI (Orijinal HistoryScreen) -->
+            <!-- 6. GEÇMİŞ & BORÇ TAKİBİ EKRANI -->
             <section id="screen-history" class="screen">
                 <div class="lobby-header">
                     <h2>Geçmiş & Borç Defteri</h2>
-                    <p class="sub-desc">Önceki yemek oylamaları ve kalan borç durumları.</p>
+                    <p class="sub-desc">Önceki yemek oylamaları, sipariş dökümleri ve kalan borçlar.</p>
                 </div>
 
                 <div class="glass-card mb-3">
-                    <h3 class="font-bold mb-2"><i class="fa-solid fa-wallet text-orange"></i> Aktif Borç/Alacak Özeti</h3>
+                    <h3 class="font-bold mb-2"><i class="fa-solid fa-wallet text-orange"></i> Kim Kime Ne Kadar Borçlu?</h3>
                     <div id="activeDebtSummaryBox" class="active-debt-list">
                         <!-- Dynamic via JS -->
                     </div>
                 </div>
 
                 <div class="glass-card">
-                    <h3 class="font-bold mb-2"><i class="fa-solid fa-clock-rotate-left"></i> Oylama Geçmişi</h3>
+                    <h3 class="font-bold mb-2"><i class="fa-solid fa-clock-rotate-left"></i> Önceki Siparişler</h3>
                     <div id="votingHistoryList" class="history-list">
                         <!-- Dynamic via JS -->
                     </div>
@@ -420,11 +435,11 @@
             </button>
             <button class="nav-tab" data-target="screen-wheel" id="tabWheel">
                 <i class="fa-solid fa-dharmachakra"></i>
-                <span>Çark & Sipariş</span>
+                <span>Siparişçi</span>
             </button>
             <button class="nav-tab" data-target="screen-result" id="tabResult">
                 <i class="fa-solid fa-receipt"></i>
-                <span>Hesap & Sipariş</span>
+                <span>Sepet & Hesap</span>
             </button>
             <button class="nav-tab" data-target="screen-history" id="tabHistory">
                 <i class="fa-solid fa-wallet"></i>
@@ -437,21 +452,21 @@
     <div class="modal" id="menuManagerModal">
         <div class="modal-card modal-large">
             <div class="modal-header-row">
-                <h3>Yemek Listesini Yönet</h3>
+                <h3>Mutfak / Yemek Listesini Yönet</h3>
                 <button class="icon-btn-sm" id="btnCloseMenuManager">&times;</button>
             </div>
             
-            <p class="small-text mb-3">İstediğin yemeği ekle, istemediklerini listeden çıkar:</p>
+            <p class="small-text mb-3">İstediğin restoranı/yemeği ekle veya istemediklerini listeden çıkar:</p>
 
             <!-- Yemek Ekle Formu -->
             <div class="add-food-form">
-                <input type="text" id="newFoodNameInput" class="compact-input" placeholder="Yemek Adı (Örn: Çökertme Kebabı)">
+                <input type="text" id="newFoodNameInput" class="compact-input" placeholder="Yemek / Restoran Adı (Örn: Çökertme Kebabı)">
                 <div class="form-row">
                     <input type="text" id="newFoodCategoryInput" class="compact-input flex-1" placeholder="Kategori (Örn: Kebap)">
                     <input type="text" id="newFoodEmojiInput" class="compact-input w-20 text-center" placeholder="Emoji 🍲" maxlength="2">
                 </div>
                 <button class="btn btn-primary btn-block btn-sm mt-2" id="btnAddFoodItem">
-                    <i class="fa-solid fa-plus"></i> Menüye Ekle
+                    <i class="fa-solid fa-plus"></i> Listeye Ekle
                 </button>
             </div>
 
@@ -467,13 +482,13 @@
     <!-- MODAL 2: Eşleşme Kutlama Modalı -->
     <div class="modal" id="matchModal">
         <div class="modal-card">
-            <div class="modal-emoji">🎉🍔🍕</div>
-            <h2>EŞLEŞME YAKALANDI!</h2>
+            <div class="modal-emoji">🎉🍢🔥</div>
+            <h2>MUTFAKTA ANLAŞILDI!</h2>
             <p>Gruptaki herkes bu lezzete bayıldı:</p>
-            <div class="matched-food-box" id="modalMatchedFoodName">Lahmacun & Ayran</div>
-            <p class="modal-subtext">Şimdi sıra siparişçiyi belirlemede!</p>
+            <div class="matched-food-box" id="modalMatchedFoodName">Kebap Ziyafeti</div>
+            <p class="modal-subtext">Şimdi siparişçiyi seçip tabaklarımızı belirleyelim!</p>
             <button class="btn btn-primary btn-block btn-pulse" id="btnModalGoToWheel">
-                <i class="fa-solid fa-dharmachakra"></i> Çarkıfeleğe / Gönüllü Seçimine Git
+                <i class="fa-solid fa-dharmachakra"></i> Siparişçi & Sepet Ekranına Git
             </button>
         </div>
     </div>
