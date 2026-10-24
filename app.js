@@ -1,41 +1,3 @@
-
-// --- FAVORİ YEMEKLER SİSTEMİ (YILDIZLA & SEPETTE HIZLI EKLE) ---
-state.favoriteItemIds = JSON.parse(localStorage.getItem('neyiyoruz_fav_foods')) || ['lahmacun_1', 'burger_1', 'ayran_1'];
-
-window.toggleFavoriteFood = function(itemId, event) {
-    if (event) {
-        event.stopPropagation();
-        event.preventDefault();
-    }
-    if (!state.favoriteItemIds) state.favoriteItemIds = [];
-
-    const idx = state.favoriteItemIds.indexOf(itemId);
-    const item = FOOD_CATALOG.find(f => f.id === itemId);
-    const itemName = item ? item.name : 'Lezzet';
-
-    if (idx >= 0) {
-        state.favoriteItemIds.splice(idx, 1);
-        if (typeof window.showAppToast === 'function') {
-            window.showAppToast(`☆ "${itemName}" favorilerden çıkarıldı.`, 'info');
-        }
-    } else {
-        state.favoriteItemIds.push(itemId);
-        audio.init();
-        audio.tick();
-        if (typeof window.showAppToast === 'function') {
-            window.showAppToast(`⭐ "${itemName}" favorilere eklendi! Sepette hızlı ekle çipi olarak görünecek.`, 'success');
-        }
-    }
-
-    localStorage.setItem('neyiyoruz_fav_foods', JSON.stringify(state.favoriteItemIds));
-
-    // Ekranları güncelle
-    renderMenuScreen();
-    if (state.plates && state.plates.length > 0) {
-        renderPlatesUI();
-    }
-};
-
 // --- ETKİN SİPARİŞÇİ / ÖDEYEN BELİRLEME (VARSAYILAN: ODAYI KURAN KİŞİ) ---
 function getEffectiveRunner() {
     if (state.runner && state.runner.trim()) return state.runner.trim();
@@ -155,9 +117,45 @@ const state = {
     splitMode: 'individual', // 'individual' or 'equal'
     plates: [], // [ { person: 'Ersoy', dish: 'Adana Kebap', price: 340, paid: false } ]
     debtsHistory: JSON.parse(localStorage.getItem('neyiyoruz_debts_history')) || [],
+    favoriteItemIds: JSON.parse(localStorage.getItem('neyiyoruz_fav_foods')) || ['lahmacun_1', 'burger_1', 'ayran_1'],
 };
 
 // --- 3. WEB AUDIO SYNTHESIZER ---
+
+// --- FAVORİ YEMEKLER SİSTEMİ (YILDIZLA & SEPETTE HIZLI EKLE) ---
+window.toggleFavoriteFood = function(itemId, event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    if (!state.favoriteItemIds) state.favoriteItemIds = [];
+
+    const idx = state.favoriteItemIds.indexOf(itemId);
+    const item = (typeof FOOD_CATALOG !== 'undefined') ? FOOD_CATALOG.find(f => f.id === itemId) : null;
+    const itemName = item ? item.name : 'Lezzet';
+
+    if (idx >= 0) {
+        state.favoriteItemIds.splice(idx, 1);
+        if (typeof window.showAppToast === 'function') {
+            window.showAppToast(`☆ "${itemName}" favorilerden çıkarıldı.`, 'info');
+        }
+    } else {
+        state.favoriteItemIds.push(itemId);
+        audio.init();
+        audio.tick();
+        if (typeof window.showAppToast === 'function') {
+            window.showAppToast(`⭐ "${itemName}" favorilere eklendi! Sepette hızlı ekle çipi olarak görünecek.`, 'success');
+        }
+    }
+
+    localStorage.setItem('neyiyoruz_fav_foods', JSON.stringify(state.favoriteItemIds));
+
+    if (typeof renderMenuScreen === 'function') renderMenuScreen();
+    if (state.plates && state.plates.length > 0 && typeof renderPlatesUI === 'function') {
+        renderPlatesUI();
+    }
+};
+
 const audio = {
     ctx: null,
     init() {
