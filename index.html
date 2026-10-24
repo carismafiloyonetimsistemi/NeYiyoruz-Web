@@ -217,9 +217,9 @@
                     </button>
                 </div>
                 <div class="wheel-header text-center">
-                    <span class="badge-amber">🏃 SİPARİŞÇİ BELİRLEME</span>
-                    <h2>Siparişi Kim Toplayacak?</h2>
-                    <p>İster kura çekin, ister gönüllü olanı doğrudan siparişçi yapın!</p>
+                    <span class="badge-amber" id="wheelBadge">🏃 SİPARİŞÇİ BELİRLEME</span>
+                    <h2 id="wheelTitle">Siparişi Kim Toplayacak?</h2>
+                    <p id="wheelSubDesc">İster kura çekin, ister gönüllü olanı doğrudan siparişçi yapın!</p>
                 </div>
 
                 <!-- GÖNÜLLÜ SEÇİM KUTUSU -->
@@ -577,20 +577,30 @@
             <div class="modal-header-row">
                 <div class="auth-modal-title">
                     <span class="auth-icon-badge">❤️</span>
-                    <h3>Beğendiğin Seçenekler</h3>
+                    <h3 id="likedModalTitle">Beğendiğin Ürünler</h3>
                 </div>
                 <button class="btn-close-modal" id="btnCloseLikedModal" type="button">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <p class="sub-desc mb-3">Oylamada beğendiğin mutfaklar. Hangisine karar verelim?</p>
-            <div id="likedFoodsGrid" class="cuisine-select-grid">
+            <p class="sub-desc mb-2">Beğendiğin tüm yemek ve içecekler:</p>
+            <div id="likedFoodsGrid" class="cuisine-select-grid mb-3">
                 <!-- Injected via JS -->
             </div>
-            <div class="divider">VEYA</div>
-            <button class="btn btn-primary btn-block" id="btnSpinWheelLikedFoods">
-                <i class="fa-solid fa-dharmachakra"></i> Beğendiklerim Arasında Çarkı Çevir
+
+            <!-- PRIMARY ACTION: ADD ALL LIKED ITEMS TO PLATE & GO TO CART -->
+            <button class="btn btn-success btn-block btn-lg" id="btnAddAllLikedToPlate">
+                <i class="fa-solid fa-basket-shopping"></i> Hepsini Tabağıma Ekle & Sepete Git
             </button>
+            <p class="small-text text-center text-muted mt-1 mb-3">Beğendiğin tüm ürünler tabağına aktarılır, adetlerini değiştirebilirsin.</p>
+
+            <div class="divider">VEYA BİRİNİ SEÇ</div>
+
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-outline flex-1" id="btnSpinWheelLikedFoods">
+                    <i class="fa-solid fa-dharmachakra"></i> Çarkla 1 Tanesini Seç
+                </button>
+            </div>
         </div>
     </div>
 

@@ -32,10 +32,10 @@ const SAMPLE_DISHES = {
         { dish: 'Beyti Sarma + Kola', price: 380 },
     ],
     'default': [
-        { dish: 'Ana Menü + İçecek', price: 250 },
-        { dish: 'Dürüm / Tek Porsiyon + Ayran', price: 180 },
-        { dish: 'Çorba / Hafif Menü', price: 140 },
-        { dish: 'Büyük Boy Menü + Tatlı', price: 320 },
+        { dish: 'Lahmacun', price: 110, emoji: '🍕' },
+        { dish: 'Döner Porsiyon', price: 220, emoji: '🌯' },
+        { dish: 'Köfte Ekmek / Dürüm', price: 190, emoji: '🥪' },
+        { dish: 'Tavuk Döner', price: 160, emoji: '🌯' },
     ]
 };
 
@@ -47,6 +47,7 @@ const state = {
     currentCardIndex: 0,
     acceptedFoods: [],
     swipeHistory: [],
+    wheelMode: 'runner', // 'runner' or 'food'
     winnerFood: null,
     runner: null,
     wheelAngle: 0,
@@ -176,6 +177,10 @@ const els = {
     likedFoodsGrid: document.getElementById('likedFoodsGrid'),
     btnCloseLikedModal: document.getElementById('btnCloseLikedModal'),
     btnSpinWheelLikedFoods: document.getElementById('btnSpinWheelLikedFoods'),
+    btnAddAllLikedToPlate: document.getElementById('btnAddAllLikedToPlate'),
+    wheelBadge: document.getElementById('wheelBadge'),
+    wheelTitle: document.getElementById('wheelTitle'),
+    wheelSubDesc: document.getElementById('wheelSubDesc'),
     // Runner & Volunteer
     volunteerSelect: document.getElementById('volunteerSelect'),
     btnVolunteerMyself: document.getElementById('btnVolunteerMyself'),
@@ -1166,6 +1171,16 @@ function selectRunnerDirectly(runnerPerson) {
     showRunnerResult(runnerPerson);
 }
 
+function getWheelItems() {
+    if (state.wheelMode === 'food') {
+        if (state.acceptedFoods && state.acceptedFoods.length > 0) {
+            return state.acceptedFoods.map(f => f.name);
+        }
+        return state.foods.slice(0, 6).map(f => f.name);
+    }
+    return getActiveParticipants();
+}
+
 function drawWheel() {
     const canvas = els.wheelCanvas;
     if (!canvas) return;
@@ -1173,8 +1188,8 @@ function drawWheel() {
     const width = canvas.width;
     const height = canvas.height;
     const radius = width / 2 - 10;
-    const participants = getActiveParticipants();
-    const count = participants.length;
+    const wheelItems = getWheelItems();
+    const count = Math.max(wheelItems.length, 1);
     const sliceAngle = (2 * Math.PI) / count;
 
     const colors = ['#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#f59e0b'];
@@ -1204,7 +1219,7 @@ function drawWheel() {
         ctx.font = 'bold 15px Plus Jakarta Sans, sans-serif';
         ctx.shadowColor = 'rgba(0,0,0,0.5)';
         ctx.shadowBlur = 4;
-        ctx.fillText(participants[i], radius - 20, 5);
+        ctx.fillText(wheelItems[i], radius - 20, 5);
         ctx.restore();
     }
 
@@ -1220,7 +1235,7 @@ function drawWheel() {
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('🏃', 0, 0);
+    ctx.fillText(state.wheelMode === 'food' ? '🍕' : '🏃', 0, 0);
 
     ctx.restore();
 }
@@ -1265,8 +1280,16 @@ els.btnSpinWheel.addEventListener('click', () => {
         } else {
             state.isSpinning = false;
             els.btnSpinWheel.disabled = false;
-            state.runner = participants[targetSlice];
-            showRunnerResult(state.runner);
+            if (state.wheelMode === 'food') {
+                const wheelItems = getWheelItems();
+                const foodWinnerName = wheelItems[targetSlice];
+                const foodObj = (state.acceptedFoods || state.foods).find(f => f.name === foodWinnerName) || { name: foodWinnerName, emoji: '🍽️', price: '150 ₺' };
+                state.winnerFood = foodObj;
+                showFoodWheelResult(foodObj);
+            } else {
+                state.runner = participants[targetSlice];
+                showRunnerResult(state.runner);
+            }
         }
     }
 
@@ -1320,46 +1343,56 @@ function renderResultScreen() {
 
 function setupPlatesData() {
     const participants = getActiveParticipants();
-    const cuisine = state.winnerFood ? state.winnerFood.name : 'default';
-    const samples = SAMPLE_DISHES[cuisine] || SAMPLE_DISHES['default'];
 
-    if (state.plates.length !== participants.length) {
-        state.plates = participants.map((person, idx) => {
-            const sample = samples[idx % samples.length];
-            const isRunner = (person === state.runner);
-            const unitPrice = parseFloat(sample.price) || 200;
+    // If plates are already initialized with items, preserve user customizations
+    if (state.plates && state.plates.length === participants.length && state.plates.some(p => p.items && p.items.length > 0)) {
+        return;
+    }
+
+    // Determine default items for plates:
+    let initialItems = [];
+    if (state.acceptedFoods && state.acceptedFoods.length > 0) {
+        // Use the exact items the user liked (e.g. Kola, Lahmacun, Et Döner)
+        initialItems = state.acceptedFoods.map((f, i) => {
+            const p = parseFloat(f.price) || 110;
             return {
-                person: person,
-                isRunner: isRunner,
-                paid: isRunner,
-                items: [
-                    { 
-                        id: 'it_' + Date.now() + '_' + idx, 
-                        name: sample.dish, 
-                        qty: 1, 
-                        unitPrice: unitPrice, 
-                        price: unitPrice, 
-                        emoji: sample.emoji || '🍽️', 
-                        type: 'food' 
-                    }
-                ]
+                id: 'it_liked_' + Date.now() + '_' + i,
+                name: f.name,
+                qty: 1,
+                unitPrice: p,
+                price: p,
+                emoji: f.emoji || '🍽️',
+                type: 'food'
             };
         });
-    } else {
-        state.plates.forEach((p, idx) => {
-            if (!p.items || !Array.isArray(p.items)) {
-                const uPrice = parseFloat(p.price) || 200;
-                p.items = [
-                    { id: 'it_' + Date.now() + '_' + idx, name: p.dish || 'Ana Menü', qty: 1, unitPrice: uPrice, price: uPrice, emoji: '🍽️', type: 'food' }
-                ];
-            } else {
-                p.items.forEach(it => {
-                    if (!it.qty) it.qty = 1;
-                    if (it.unitPrice === undefined) it.unitPrice = parseFloat(it.price) || 50;
-                });
+    } else if (state.winnerFood) {
+        const p = parseFloat(state.winnerFood.price) || 180;
+        initialItems = [
+            {
+                id: 'it_win_' + Date.now(),
+                name: state.winnerFood.name,
+                qty: 1,
+                unitPrice: p,
+                price: p,
+                emoji: state.winnerFood.emoji || '🍽️',
+                type: 'food'
             }
-        });
+        ];
+    } else {
+        initialItems = [
+            { id: 'it_def_lahm', name: 'Lahmacun', qty: 1, unitPrice: 110, price: 110, emoji: '🍕', type: 'food' }
+        ];
     }
+
+    state.plates = participants.map((person, idx) => {
+        const isRunner = (person === state.runner);
+        return {
+            person: person,
+            isRunner: isRunner,
+            paid: isRunner,
+            items: JSON.parse(JSON.stringify(initialItems))
+        };
+    });
 }
 
 function renderPlatesUI() {
@@ -1634,7 +1667,7 @@ els.btnCopyOrderNote = function() {
 
     let grandTotal = 0;
     state.plates.forEach(p => {
-        const items = p.items && p.items.length ? p.items : [{ name: p.dish || 'Ana Menü', price: p.price || 0, emoji: '🍽️' }];
+        const items = p.items && p.items.length ? p.items : [{ name: p.dish || 'Sipariş', price: p.price || 0, emoji: '🍽️' }];
         const personTotal = items.reduce((sum, it) => sum + (parseFloat(it.price) || 0), 0);
         grandTotal += personTotal;
 
@@ -1883,8 +1916,12 @@ if (els.btnCloseLikedModal) {
 if (els.btnSpinWheelLikedFoods) {
     els.btnSpinWheelLikedFoods.addEventListener('click', () => {
         if (els.likedChoicesModal) els.likedChoicesModal.classList.remove('active');
-        state.winnerFood = state.acceptedFoods[Math.floor(Math.random() * state.acceptedFoods.length)];
+        state.wheelMode = 'food';
+        if (els.wheelBadge) els.wheelBadge.innerText = '🍕 LEZZET KURASI';
+        if (els.wheelTitle) els.wheelTitle.innerText = 'Hangi Yemeği Yiyeceğiz?';
+        if (els.wheelSubDesc) els.wheelSubDesc.innerText = 'Beğendiğin lezzetler arasında kura çekiliyor!';
         navigateTo('screen-wheel');
+        drawWheel();
     });
 }
 
@@ -1918,4 +1955,70 @@ if (els.btnBackFromHistory) {
     els.btnBackFromHistory.addEventListener('click', () => {
         navigateTo('screen-lobby');
     });
+}
+
+
+// Hepsini Tabağıma Ekle & Sepete Git
+function addAllLikedToMyPlate() {
+    if (!state.acceptedFoods || state.acceptedFoods.length === 0) {
+        alert('Henüz beğendiğiniz bir ürün yok.');
+        return;
+    }
+
+    const participants = getActiveParticipants();
+    const myName = state.user ? state.user.name : participants[0];
+
+    // Build items from all accepted foods
+    const newItems = state.acceptedFoods.map((f, i) => {
+        const p = parseFloat(f.price) || 100;
+        return {
+            id: 'it_all_' + Date.now() + '_' + i,
+            name: f.name,
+            qty: 1,
+            unitPrice: p,
+            price: p,
+            emoji: f.emoji || '🍽️',
+            type: 'food'
+        };
+    });
+
+    state.plates = participants.map(person => ({
+        person: person,
+        isRunner: (person === state.runner),
+        paid: (person === state.runner),
+        items: JSON.parse(JSON.stringify(newItems))
+    }));
+
+    state.winnerFood = {
+        name: state.acceptedFoods.map(f => f.name).join(' + '),
+        emoji: '🍽️',
+        price: state.acceptedFoods.reduce((s, f) => s + (parseFloat(f.price) || 0), 0) + ' ₺'
+    };
+
+    if (els.likedChoicesModal) els.likedChoicesModal.classList.remove('active');
+    if (els.matchModal) els.matchModal.classList.remove('active');
+
+    renderResultScreen();
+    navigateTo('screen-result');
+}
+
+if (els.btnAddAllLikedToPlate) {
+    els.btnAddAllLikedToPlate.addEventListener('click', addAllLikedToMyPlate);
+}
+
+
+function showFoodWheelResult(foodObj) {
+    audio.fanfare();
+    if (window.confetti) {
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+    }
+    if (els.runnerName) els.runnerName.innerText = `${foodObj.emoji || '🍽️'} ${foodObj.name}`;
+    if (els.runnerResultBox) {
+        const h3 = els.runnerResultBox.querySelector('h3');
+        if (h3) h3.innerHTML = `🎉 Kazanan Lezzet: <span class="text-orange">${foodObj.name}</span>!`;
+        const p = els.runnerResultBox.querySelector('p');
+        if (p) p.innerText = 'Çark bu lezzette karar kıldı. Şimdi tabak ve sepeti oluşturalım:';
+        els.runnerResultBox.style.display = 'block';
+        els.runnerResultBox.scrollIntoView({ behavior: 'smooth' });
+    }
 }
