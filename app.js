@@ -246,11 +246,21 @@ function navigateTo(screenId) {
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    if (screenId === 'screen-wheel') {
+    if (screenId === 'screen-match') {
+        if (!state.foods || state.foods.length === 0) {
+            state.foods = DEFAULT_FOODS;
+        }
+        if (state.currentCardIndex >= state.foods.length) {
+            state.currentCardIndex = 0;
+        }
+        renderCurrentCard();
+    } else if (screenId === 'screen-wheel') {
         populateVolunteerSelect();
         drawWheel();
     } else if (screenId === 'screen-history') {
         renderHistoryScreen();
+    } else if (screenId === 'screen-result') {
+        renderResultScreen();
     }
 }
 
@@ -655,11 +665,21 @@ els.logoutBtn.addEventListener('click', async () => {
 
 // Helper for active room participants
 function getActiveParticipants() {
-    if (state.room && state.room.participants && state.room.participants.length > 0) {
-        return state.room.participants;
+    const list = [];
+    if (state.user && state.user.name) {
+        list.push(state.user.name);
     }
-    const currentName = state.user ? state.user.name : 'Siz';
-    return [currentName];
+    if (state.room && state.room.participants && Array.isArray(state.room.participants)) {
+        state.room.participants.forEach(p => {
+            if (p && !list.includes(p)) list.push(p);
+        });
+    }
+    if (state.plates && Array.isArray(state.plates)) {
+        state.plates.forEach(pl => {
+            if (pl && pl.person && !list.includes(pl.person)) list.push(pl.person);
+        });
+    }
+    return list.length > 0 ? list : ['Siz'];
 }
 
 // --- 7. ROOM SYSTEM ---
@@ -682,6 +702,9 @@ function createRoom(title) {
     }
 
     renderActiveRoom();
+    populateVolunteerSelect();
+    drawWheel();
+    initRoomRealtime(code);
 }
 
 function joinRoom(code) {
@@ -703,6 +726,9 @@ function joinRoom(code) {
     };
 
     renderActiveRoom();
+    populateVolunteerSelect();
+    drawWheel();
+    initRoomRealtime(code);
 }
 
 window.addParticipantToRoom = function(name) {
@@ -1995,6 +2021,7 @@ function addAllLikedToMyPlate() {
     if (els.matchModal) els.matchModal.classList.remove('active');
 
     renderResultScreen();
+    broadcastPlatesChange();
     navigateTo('screen-result');
 }
 
@@ -2200,6 +2227,9 @@ window.clonePlateForAnotherPerson = function(sourceIndex) {
 
     renderPlatesUI();
     renderActiveRoom();
+    populateVolunteerSelect();
+    drawWheel();
+    broadcastPlatesChange();
 
     alert(`🎉 ${cleanName} aramıza katıldı ve "${sourcePlate.person}" ile aynı siparişi (${sourcePlate.items.map(i => (i.qty > 1 ? i.qty + 'x ' : '') + i.name).join(', ')}) tabağına eklendi!`);
 };
@@ -2244,3 +2274,223 @@ window.promptAddItemToPlate = function(personIndex) {
     audio.tick();
     renderPlatesUI();
 };
+
+
+// --- 14. SUPABASE REALTIME MULTIPLAYER ROOM & PLATES SYNC ---
+let currentRoomChannel = null;
+
+function showGlobalToast(msg) {
+    let toast = document.getElementById('globalRoomToast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'globalRoomToast';
+        toast.className = 'global-room-toast';
+        document.body.appendChild(toast);
+    }
+    toast.innerText = msg;
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3500);
+}
+
+function initRoomRealtime(roomCode) {
+    if (!supabaseClient) {
+        console.warn('Supabase client not available for realtime sync.');
+        return;
+    }
+
+    if (!roomCode) return;
+
+    if (currentRoomChannel) {
+        try {
+            supabaseClient.removeChannel(currentRoomChannel);
+        } catch (e) {}
+        currentRoomChannel = null;
+    }
+
+    const currentUserName = state.user ? state.user.name : (getActiveParticipants()[0] || 'Katılımcı');
+    console.log(`[Supabase Realtime] Connecting to room: ${roomCode} as ${currentUserName}`);
+
+    currentRoomChannel = supabaseClient.channel('room_' + roomCode, {
+        config: {
+            broadcast: { ack: true, self: false },
+            presence: { key: currentUserName }
+        }
+    });
+
+    // 1. PRESENCE: Canlı Katılımcı Senkronizasyonu
+    currentRoomChannel
+        .on('presence', { event: 'sync' }, () => {
+            const presenceState = currentRoomChannel.presenceState();
+            const members = Object.keys(presenceState);
+            console.log('[Supabase Presence Sync] Online members:', members);
+
+            let updated = false;
+            members.forEach(member => {
+                if (member && !state.room.participants.includes(member)) {
+                    state.room.participants.push(member);
+                    updated = true;
+                }
+            });
+
+            if (updated) {
+                renderActiveRoom();
+                setupPlatesData();
+                renderPlatesUI();
+                populateVolunteerSelect();
+                drawWheel();
+            }
+        })
+        .on('presence', { event: 'join' }, ({ key }) => {
+            console.log('[Supabase Presence Join] User joined:', key);
+            if (key && !state.room.participants.includes(key)) {
+                state.room.participants.push(key);
+                renderActiveRoom();
+                setupPlatesData();
+                renderPlatesUI();
+                populateVolunteerSelect();
+                drawWheel();
+                audio.init();
+                audio.fanfare();
+                showGlobalToast(`🎉 ${key} odaya katıldı!`);
+                broadcastRoomState();
+            }
+        });
+
+    // 2. BROADCAST: Tabaklar, Yemek Seçimleri ve Sayaç Senkronizasyonu
+    currentRoomChannel
+        .on('broadcast', { event: 'request_state' }, (msg) => {
+            console.log('[Broadcast] State requested by newcomer:', msg);
+            broadcastRoomState();
+        })
+        .on('broadcast', { event: 'room_state' }, ({ payload }) => {
+            console.log('[Broadcast] Received room_state:', payload);
+            if (!payload) return;
+
+            let platesChanged = false;
+
+            if (payload.title && state.room) {
+                state.room.title = payload.title;
+            }
+
+            if (payload.participants && Array.isArray(payload.participants)) {
+                payload.participants.forEach(p => {
+                    if (!state.room.participants.includes(p)) {
+                        state.room.participants.push(p);
+                    }
+                });
+            }
+
+            if (payload.plates && Array.isArray(payload.plates)) {
+                mergeRemotePlates(payload.plates);
+                platesChanged = true;
+            }
+
+            if (payload.winnerFood) {
+                state.winnerFood = payload.winnerFood;
+            }
+
+            if (payload.timerEndTime && (!state.room.timerEndTime || payload.timerEndTime > state.room.timerEndTime)) {
+                state.room.timerEndTime = payload.timerEndTime;
+                state.room.timerMinutes = payload.timerMinutes || 10;
+                startRoomCountdown(payload.timerEndTime);
+            }
+
+            renderActiveRoom();
+            populateVolunteerSelect();
+            drawWheel();
+            if (platesChanged) {
+                renderPlatesUI();
+            }
+        })
+        .on('broadcast', { event: 'plates_update' }, ({ payload }) => {
+            console.log('[Broadcast] Received plates_update:', payload);
+            if (payload && Array.isArray(payload.plates)) {
+                mergeRemotePlates(payload.plates);
+                renderPlatesUI();
+                populateVolunteerSelect();
+                drawWheel();
+                showGlobalToast(`🛒 Siparişler güncellendi!`);
+            }
+        })
+        .subscribe(async (status) => {
+            console.log('[Supabase Realtime] Channel status:', status);
+            if (status === 'SUBSCRIBED') {
+                await currentRoomChannel.track({
+                    name: currentUserName,
+                    onlineAt: new Date().toISOString()
+                });
+
+                currentRoomChannel.send({
+                    type: 'broadcast',
+                    event: 'request_state',
+                    payload: { from: currentUserName }
+                });
+
+                broadcastRoomState();
+            }
+        });
+}
+
+function mergeRemotePlates(remotePlates) {
+    if (!remotePlates || !Array.isArray(remotePlates)) return;
+
+    if (!state.plates || state.plates.length === 0) {
+        state.plates = remotePlates;
+        return;
+    }
+
+    const currentUserName = state.user ? state.user.name : (getActiveParticipants()[0] || 'Siz');
+
+    remotePlates.forEach(remotePlate => {
+        const localIdx = state.plates.findIndex(p => p.person.toLowerCase() === remotePlate.person.toLowerCase());
+        if (localIdx >= 0) {
+            if (remotePlate.person.toLowerCase() !== currentUserName.toLowerCase()) {
+                state.plates[localIdx] = remotePlate;
+            }
+        } else {
+            state.plates.push(remotePlate);
+            if (!state.room.participants.includes(remotePlate.person)) {
+                state.room.participants.push(remotePlate.person);
+            }
+        }
+    });
+}
+
+function broadcastPlatesChange() {
+    if (!currentRoomChannel) return;
+    try {
+        currentRoomChannel.send({
+            type: 'broadcast',
+            event: 'plates_update',
+            payload: {
+                plates: state.plates,
+                sender: state.user ? state.user.name : 'Siz'
+            }
+        });
+    } catch (e) {
+        console.warn('Broadcast plates change error:', e);
+    }
+}
+
+function broadcastRoomState() {
+    if (!currentRoomChannel || !state.room) return;
+    try {
+        currentRoomChannel.send({
+            type: 'broadcast',
+            event: 'room_state',
+            payload: {
+                title: state.room.title,
+                code: state.room.code,
+                participants: state.room.participants,
+                plates: state.plates,
+                winnerFood: state.winnerFood,
+                timerEndTime: state.room.timerEndTime,
+                timerMinutes: state.room.timerMinutes
+            }
+        });
+    } catch (e) {
+        console.warn('Broadcast room state error:', e);
+    }
+}
