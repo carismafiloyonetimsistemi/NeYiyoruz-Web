@@ -227,7 +227,21 @@ els.navTabs.forEach(tab => {
     });
 });
 
-// --- 6. GUEST & USER AUTH ---
+// --- 6. GUEST & SUPABASE CLOUD AUTH ---
+const SUPABASE_CONFIG = {
+    url: 'https://cavkyexsgoytjndoafmt.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhdmt5ZXhzZ295dGpuZG9hZm10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NTM2NzMsImV4cCI6MjA4MTUyOTY3M30.SvgxizvwSjkpe1j8Tpq1n7aLxFrH8C2_jZCatvJYhjo'
+};
+
+let supabaseClient = null;
+try {
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+        supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+    }
+} catch (e) {
+    console.warn('Supabase initialization warning:', e);
+}
+
 let currentAuthMode = 'login'; // 'login' or 'register'
 
 // Seed initial registered users if not present
@@ -350,7 +364,7 @@ function closeAuthModal() {
     els.pwdEyeIcon.className = 'fa-solid fa-eye';
 }
 
-function handleAuthSubmit() {
+async function handleAuthSubmit() {
     audio.init();
     clearAuthAlert();
 
@@ -372,62 +386,174 @@ function handleAuthSubmit() {
         return;
     }
 
-    const users = getRegisteredUsers();
-
     if (currentAuthMode === 'register') {
         if (!name) {
-            showAuthAlert('Lütfen adınızı veya takma adınızı giriniz.');
+            showAuthAlert('Lütfen adınızı veya lakabınızı giriniz.');
             els.authNameInput.focus();
             return;
         }
 
-        const existingUser = users.find(u => u.email.toLowerCase() === email);
-        if (existingUser) {
-            showAuthAlert('Bu e-posta adresiyle zaten bir hesap var! Giriş sekmesinden giriş yapabilirsiniz.');
-            return;
-        }
+        els.btnAuthSubmit.disabled = true;
+        els.btnAuthSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Kayıt Yapılıyor...';
 
         const avatars = ['😎', '🍕', '🚀', '🔥', '🦁', '🌟', '👨‍🍳', '🍲', '🥑', '🌮'];
-        const newUser = {
-            name: name,
-            email: email,
-            password: password,
-            avatar: avatars[Math.floor(Math.random() * avatars.length)],
-            isGuest: false,
-            createdAt: new Date().toISOString()
-        };
+        const avatar = avatars[Math.floor(Math.random() * avatars.length)];
 
-        saveRegisteredUser(newUser);
-        showAuthAlert('Hesabınız başarıyla oluşturuldu! Giriş yapılıyor...', true);
-        audio.fanfare();
+        // Try Supabase Auth First
+        if (supabaseClient) {
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            full_name: name,
+                            avatar: avatar
+                        }
+                    }
+                });
 
-        setTimeout(() => {
-            closeAuthModal();
-            setUserSession(newUser);
-        }, 600);
+                if (error) {
+                    throw error;
+                }
+
+                const newUser = {
+                    id: data.user ? data.user.id : Date.now().toString(),
+                    name: name,
+                    email: email,
+                    avatar: avatar,
+                    isGuest: false,
+                    provider: 'supabase',
+                    createdAt: new Date().toISOString()
+                };
+
+                saveRegisteredUser(newUser);
+
+                if (data.session) {
+                    showAuthAlert('Supabase hesabı oluşturuldu! Giriş yapılıyor...', true);
+                    audio.fanfare();
+                    setTimeout(() => {
+                        closeAuthModal();
+                        setUserSession(newUser);
+                    }, 600);
+                } else {
+                    showAuthAlert('Hesabınız başarıyla oluşturuldu! Şimdi giriş yapabilirsiniz.', true);
+                    audio.fanfare();
+                    setTimeout(() => {
+                        setAuthMode('login');
+                        els.authEmailInput.value = email;
+                        els.authPasswordInput.value = password;
+                    }, 1200);
+                }
+                return;
+            } catch (err) {
+                console.warn('Supabase register error:', err);
+                const errMsg = err.message || '';
+                if (errMsg.includes('already registered')) {
+                    showAuthAlert('Bu e-posta adresiyle zaten kayıtlı bir hesap var! Giriş yapabilirsiniz.');
+                    return;
+                } else if (errMsg.includes('Failed to fetch') || errMsg.includes('521') || errMsg.includes('NetworkError')) {
+                    showAuthAlert('Supabase sunucusu şu an aktif ediliyor / uyanıyor. Lütfen 1 dakika sonra tekrar deneyiniz.');
+                    return;
+                }
+                // Fallback to local
+                const users = getRegisteredUsers();
+                if (users.find(u => u.email.toLowerCase() === email)) {
+                    showAuthAlert('Bu e-posta adresiyle zaten kayıtlı bir hesap var! Giriş yapabilirsiniz.');
+                    return;
+                }
+                const localUser = {
+                    name: name,
+                    email: email,
+                    password: password,
+                    avatar: avatar,
+                    isGuest: false,
+                    provider: 'local',
+                    createdAt: new Date().toISOString()
+                };
+                saveRegisteredUser(localUser);
+                showAuthAlert('Hesap yerel hafızaya kaydedildi! Giriş yapılıyor...', true);
+                audio.fanfare();
+                setTimeout(() => {
+                    closeAuthModal();
+                    setUserSession(localUser);
+                }, 600);
+                return;
+            } finally {
+                els.btnAuthSubmit.disabled = false;
+                els.btnAuthSubmit.innerHTML = '<i class="fa-solid fa-user-plus"></i> Kayıt Ol ve Başla';
+            }
+        }
     } else {
-        // Login mode
-        const foundUser = users.find(u => u.email.toLowerCase() === email);
+        // LOGIN MODE
+        els.btnAuthSubmit.disabled = true;
+        els.btnAuthSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Giriş Yapılıyor...';
 
-        if (!foundUser) {
-            // Not registered yet
-            showAuthAlert('Bu e-posta adresine ait kayıtlı hesap bulunamadı. "Kayıt Ol" sekmesinden yeni hesap açabilirsiniz.');
-            return;
+        if (supabaseClient) {
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                if (data && data.user) {
+                    const fullName = data.user.user_metadata?.full_name || email.split('@')[0];
+                    const avatar = data.user.user_metadata?.avatar || '👨‍🍳';
+
+                    const userObj = {
+                        id: data.user.id,
+                        name: fullName,
+                        email: data.user.email,
+                        avatar: avatar,
+                        isGuest: false,
+                        provider: 'supabase'
+                    };
+
+                    saveRegisteredUser(userObj);
+                    showAuthAlert(`Hoş geldin ${userObj.name}! Giriş başarılı...`, true);
+                    audio.fanfare();
+
+                    setTimeout(() => {
+                        closeAuthModal();
+                        setUserSession(userObj);
+                    }, 500);
+                    return;
+                }
+            } catch (err) {
+                console.warn('Supabase login error, checking local store:', err);
+                const errMsg = err.message || '';
+
+                // Check local user database fallback (e.g. demo account or locally saved)
+                const localUser = getRegisteredUsers().find(u => u.email.toLowerCase() === email && u.password === password);
+                if (localUser) {
+                    showAuthAlert(`Hoş geldin ${localUser.name}! Giriş başarılı...`, true);
+                    audio.fanfare();
+                    setTimeout(() => {
+                        closeAuthModal();
+                        setUserSession(localUser);
+                    }, 500);
+                    return;
+                }
+
+                if (errMsg.includes('Invalid login credentials')) {
+                    showAuthAlert('E-posta veya şifre hatalı! Lütfen bilgilerinizi kontrol ediniz.');
+                } else if (errMsg.includes('Email not confirmed')) {
+                    showAuthAlert('Lütfen e-posta adresinize gelen onay linkine tıklayınız.');
+                } else if (errMsg.includes('Failed to fetch') || errMsg.includes('521') || errMsg.includes('NetworkError')) {
+                    showAuthAlert('Supabase sunucusu şu an aktif ediliyor / uyanıyor. Lütfen 1 dakika sonra tekrar deneyiniz.');
+                } else {
+                    showAuthAlert(errMsg || 'Giriş yapılamadı.');
+                }
+                return;
+            } finally {
+                els.btnAuthSubmit.disabled = false;
+                els.btnAuthSubmit.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Giriş Yap';
+            }
         }
-
-        if (foundUser.password !== password) {
-            showAuthAlert('Girdiğiniz şifre hatalı! Lütfen tekrar deneyiniz.');
-            els.authPasswordInput.focus();
-            return;
-        }
-
-        showAuthAlert(`Hoş geldin ${foundUser.name}! Giriş başarılı...`, true);
-        audio.fanfare();
-
-        setTimeout(() => {
-            closeAuthModal();
-            setUserSession(foundUser);
-        }, 500);
     }
 }
 
@@ -482,7 +608,12 @@ els.btnGuestStart.addEventListener('click', () => {
     loginAsGuest(val || 'Misafir Gurme');
 });
 
-els.logoutBtn.addEventListener('click', () => {
+els.logoutBtn.addEventListener('click', async () => {
+    if (supabaseClient) {
+        try {
+            await supabaseClient.auth.signOut();
+        } catch (e) {}
+    }
     localStorage.removeItem('neyiyoruz_user');
     state.user = null;
     els.userBadge.style.display = 'none';
@@ -1353,12 +1484,35 @@ els.btnCloseBanner.addEventListener('click', () => {
     els.stickyBanner.style.display = 'none';
 });
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+    // Check Supabase session first if available
+    if (supabaseClient) {
+        try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session && session.user) {
+                const userObj = {
+                    id: session.user.id,
+                    name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+                    email: session.user.email,
+                    avatar: session.user.user_metadata?.avatar || '👨‍🍳',
+                    isGuest: false,
+                    provider: 'supabase'
+                };
+                setUserSession(userObj);
+                renderFoodManageList();
+                drawWheel();
+                return;
+            }
+        } catch (e) {
+            console.warn('Supabase getSession warning:', e);
+        }
+    }
+
     const saved = localStorage.getItem('neyiyoruz_user');
     if (saved) {
         state.user = JSON.parse(saved);
         els.displayUsername.innerText = state.user.name;
-        els.userAvatar.innerText = state.user.avatar;
+        els.userAvatar.innerText = state.user.avatar || '😎';
         els.userBadge.style.display = 'flex';
         navigateTo('screen-lobby');
     } else {
