@@ -1803,10 +1803,18 @@ function showRunnerResult(winnerRunner) {
     els.runnerResultBox.scrollIntoView({ behavior: 'smooth' });
 }
 
-els.btnProceedToOrder.addEventListener('click', () => {
-    renderResultScreen();
-    navigateTo('screen-result');
-});
+if (els.btnProceedToOrder) {
+    els.btnProceedToOrder.addEventListener('click', () => {
+        try {
+            renderResultScreen();
+        } catch (err) {
+            console.error('renderResultScreen error, falling back:', err);
+            setupPlatesData();
+            renderPlatesUI();
+        }
+        navigateTo('screen-result');
+    });
+}
 
 // --- 11. BİREYSEL TABAKLAR & ADALETLİ HESAP BÖLÜŞÜMÜ (INDIVIDUAL PLATES & FAIR SPLIT) ---
 function renderResultScreen() {
@@ -1815,33 +1823,34 @@ function renderResultScreen() {
     const hasCuisine = !!state.winnerFood;
 
     if (hasCuisine) {
-        els.finalFoodTitle.innerText = `${state.winnerFood.name}!`;
-        els.winnerFoodEmoji.innerText = state.winnerFood.emoji || '🍽️';
-        els.winnerFoodName.innerText = state.winnerFood.name;
+        if (els.finalFoodTitle) els.finalFoodTitle.innerText = `${state.winnerFood.name}!`;
+        if (els.winnerFoodEmoji) els.winnerFoodEmoji.innerText = state.winnerFood.emoji || '🍽️';
+        if (els.winnerFoodName) els.winnerFoodName.innerText = state.winnerFood.name;
         if (els.winnerDecisionTag) {
             els.winnerDecisionTag.innerText = '🏆 Seçilen Ortak Mutfak';
         }
     } else {
         // Kullanıcı henüz bir yemek veya ortak karar belirlemedi
         const roomTitle = state.room?.title || 'Ortak Sipariş Masası';
-        els.finalFoodTitle.innerText = roomTitle;
-        els.winnerFoodEmoji.innerText = '🍽️';
-        els.winnerFoodName.innerText = 'Serbest Sipariş Masası';
+        if (els.finalFoodTitle) els.finalFoodTitle.innerText = roomTitle;
+        if (els.winnerFoodEmoji) els.winnerFoodEmoji.innerText = '🍽️';
+        if (els.winnerFoodName) els.winnerFoodName.innerText = 'Serbest Sipariş Masası';
         if (els.winnerDecisionTag) {
             els.winnerDecisionTag.innerText = '📋 Herkes Kendi Tabağını Belirliyor';
         }
     }
 
-    els.summaryRunnerName.innerText = runner;
-    els.cartRunnerDisplay.innerText = runner;
+    if (els.summaryRunnerName) els.summaryRunnerName.innerText = runner;
+    if (els.cartRunnerDisplay) els.cartRunnerDisplay.innerText = runner;
 
     // Generate Affiliate Search Links
-    const query = encodeURIComponent(food.name.replace(/[^a-zA-Z0-9ığüşöçİĞÜŞÖÇ ]/g, ''));
+    const targetFoodName = (state.winnerFood && state.winnerFood.name) ? state.winnerFood.name : 'Yemek';
+    const query = encodeURIComponent(targetFoodName.replace(/[^a-zA-Z0-9ığüşöçİĞÜŞÖÇ ]/g, ''));
     const affId = 'neyiyoruz_aff';
 
-    els.linkYemeksepeti.href = `https://www.yemeksepeti.com/search?q=${query}&utm_source=affiliate&utm_medium=neyiyoruz&ref=${affId}`;
-    els.linkTrendyol.href = `https://www.trendyol.com/sr?q=${query}&ty_aff=${affId}`;
-    els.linkGetir.href = `https://getir.com/yemek/ara/?q=${query}&utm_source=neyiyoruz`;
+    if (els.linkYemeksepeti) els.linkYemeksepeti.href = `https://www.yemeksepeti.com/search?q=${query}&utm_source=affiliate&utm_medium=neyiyoruz&ref=${affId}`;
+    if (els.linkTrendyol) els.linkTrendyol.href = `https://www.trendyol.com/sr?q=${query}&ty_aff=${affId}`;
+    if (els.linkGetir) els.linkGetir.href = `https://getir.com/yemek/ara/?q=${query}&utm_source=neyiyoruz`;
 
     setupPlatesData();
     renderPlatesUI();
