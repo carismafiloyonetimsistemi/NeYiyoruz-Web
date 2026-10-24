@@ -1476,21 +1476,30 @@ els.btnProceedToOrder.addEventListener('click', () => {
 
 // --- 11. BİREYSEL TABAKLAR & ADALETLİ HESAP BÖLÜŞÜMÜ (INDIVIDUAL PLATES & FAIR SPLIT) ---
 function renderResultScreen() {
-    const food = state.winnerFood || (state.acceptedFoods && state.acceptedFoods[0]) || state.foods[0];
-    state.winnerFood = food;
     const participants = getActiveParticipants();
     const runner = state.runner || (state.user ? state.user.name : (participants[0] || 'Siparişçi'));
+    const hasCuisine = !!state.winnerFood;
 
-    els.finalFoodTitle.innerText = `${food.name}!`;
-    els.winnerFoodEmoji.innerText = food.emoji;
-    els.winnerFoodName.innerText = food.name;
+    if (hasCuisine) {
+        els.finalFoodTitle.innerText = `${state.winnerFood.name}!`;
+        els.winnerFoodEmoji.innerText = state.winnerFood.emoji || '🍽️';
+        els.winnerFoodName.innerText = state.winnerFood.name;
+        if (els.winnerDecisionTag) {
+            els.winnerDecisionTag.innerText = '🏆 Seçilen Ortak Mutfak';
+        }
+    } else {
+        // Kullanıcı henüz bir yemek veya ortak karar belirlemedi
+        const roomTitle = state.room?.title || 'Ortak Sipariş Masası';
+        els.finalFoodTitle.innerText = roomTitle;
+        els.winnerFoodEmoji.innerText = '🍽️';
+        els.winnerFoodName.innerText = 'Serbest Sipariş Masası';
+        if (els.winnerDecisionTag) {
+            els.winnerDecisionTag.innerText = '📋 Herkes Kendi Tabağını Belirliyor';
+        }
+    }
+
     els.summaryRunnerName.innerText = runner;
     els.cartRunnerDisplay.innerText = runner;
-
-    const isSolo = (participants.length <= 1);
-    if (els.winnerDecisionTag) {
-        els.winnerDecisionTag.innerText = isSolo ? '✨ Senin Seçimin' : '🔥 Grubun Ortak Kararı';
-    }
 
     // Generate Affiliate Search Links
     const query = encodeURIComponent(food.name.replace(/[^a-zA-Z0-9ığüşöçİĞÜŞÖÇ ]/g, ''));
@@ -1507,53 +1516,30 @@ function renderResultScreen() {
 function setupPlatesData() {
     const participants = getActiveParticipants();
 
-    // If plates are already initialized with items, preserve user customizations
-    if (state.plates && state.plates.length === participants.length && state.plates.some(p => p.items && p.items.length > 0)) {
+    // Eğer tabaklar zaten varsa katılımcıları koru, eksik olan varsa boş tabak olarak ekle
+    if (state.plates && state.plates.length > 0) {
+        participants.forEach(person => {
+            const exists = state.plates.some(p => p.person.toLowerCase() === person.toLowerCase());
+            if (!exists) {
+                state.plates.push({
+                    person: person,
+                    isRunner: (person === state.runner),
+                    paid: (person === state.runner),
+                    items: []
+                });
+            }
+        });
         return;
     }
 
-    // Determine default items for plates:
-    let initialItems = [];
-    if (state.acceptedFoods && state.acceptedFoods.length > 0) {
-        // Use the exact items the user liked (e.g. Kola, Lahmacun, Et Döner)
-        initialItems = state.acceptedFoods.map((f, i) => {
-            const p = parseFloat(f.price) || 110;
-            return {
-                id: 'it_liked_' + Date.now() + '_' + i,
-                name: f.name,
-                qty: 1,
-                unitPrice: p,
-                price: p,
-                emoji: f.emoji || '🍽️',
-                type: 'food'
-            };
-        });
-    } else if (state.winnerFood) {
-        const p = parseFloat(state.winnerFood.price) || 180;
-        initialItems = [
-            {
-                id: 'it_win_' + Date.now(),
-                name: state.winnerFood.name,
-                qty: 1,
-                unitPrice: p,
-                price: p,
-                emoji: state.winnerFood.emoji || '🍽️',
-                type: 'food'
-            }
-        ];
-    } else {
-        initialItems = [
-            { id: 'it_def_lahm', name: 'Lahmacun', qty: 1, unitPrice: 110, price: 110, emoji: '🍕', type: 'food' }
-        ];
-    }
-
-    state.plates = participants.map((person, idx) => {
+    // Tabaklar BAŞLANGIÇTA TAMAMEN BOŞTUR! Kullanıcı sipariş belirlemeden kimseye lahmacun veya başka yemek atanmaz.
+    state.plates = participants.map((person) => {
         const isRunner = (person === state.runner);
         return {
             person: person,
             isRunner: isRunner,
             paid: isRunner,
-            items: JSON.parse(JSON.stringify(initialItems))
+            items: []
         };
     });
 }
@@ -1588,7 +1574,16 @@ function renderPlatesUI() {
 
                 <!-- Seçilen Yemek ve İçecekler Listesi -->
                 <div class="plate-items-container">
-                    ${plate.items.map((it, itemIdx) => {
+                    ${(!plate.items || plate.items.length === 0) ? `
+                        <div class="empty-plate-hint">
+                            <span class="empty-icon">🍽️</span>
+                            <strong>Tabağınız Henüz Boş</strong>
+                            <p>Henüz bir seçim yapmadınız. Dilediğiniz lezzet ve içecekleri ekleyin:</p>
+                            <button type="button" class="btn btn-xs btn-primary" onclick="promptAddItemToPlate(${index})">
+                                <i class="fa-solid fa-plus"></i> Yemek veya İçecek Ekle
+                            </button>
+                        </div>
+                    ` : plate.items.map((it, itemIdx) => {
                         const qty = it.qty || 1;
                         const unitPrice = it.unitPrice !== undefined ? it.unitPrice : it.price;
                         const totalPrice = it.price !== undefined ? it.price : (qty * unitPrice);
@@ -1617,11 +1612,9 @@ function renderPlatesUI() {
                                        onchange="updatePlateItemPrice(${index}, ${itemIdx}, this.value)">
                                 <span class="plate-item-currency">₺</span>
                             </div>
-                            ${plate.items.length > 1 ? `
-                                <button type="button" class="btn-remove-plate-item" onclick="removePlateItem(${index}, ${itemIdx})" title="Bu ürünü çıkar">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            ` : ''}
+                            <button type="button" class="btn-remove-plate-item" onclick="removePlateItem(${index}, ${itemIdx})" title="Bu ürünü çıkar">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
                         </div>
                         `;
                     }).join('')}
@@ -1639,7 +1632,7 @@ function renderPlatesUI() {
 
                 <div class="plate-status-row">
                     <button class="debt-status-btn ${plate.paid ? 'status-paid' : 'status-debt'}" onclick="togglePlatePaid(${index})">
-                        ${plate.paid ? '✓ Ödedi' : '❌ Borçlu (' + personTotal + ' ₺)'}
+                        ${plate.paid ? '✓ Ödedi' : (personTotal > 0 ? '❌ Borçlu (' + personTotal + ' ₺)' : '⚪ Sipariş Bekleniyor')}
                     </button>
                 </div>
             </div>
@@ -1689,13 +1682,7 @@ window.changePlateItemQty = function(personIndex, itemIndex, delta) {
 
     const newQty = item.qty + delta;
     if (newQty <= 0) {
-        if (plate.items.length > 1) {
-            removePlateItem(personIndex, itemIndex);
-        } else {
-            item.qty = 1;
-            item.price = item.unitPrice;
-            renderPlatesUI();
-        }
+        removePlateItem(personIndex, itemIndex);
         return;
     }
 
@@ -1704,6 +1691,7 @@ window.changePlateItemQty = function(personIndex, itemIndex, delta) {
     audio.init();
     audio.tick();
     renderPlatesUI();
+    broadcastPlatesChange();
 };
 
 window.addQuickItemToPlate = function(personIndex, name, price, emoji, type) {
@@ -1755,6 +1743,7 @@ window.removePlateItem = function(personIndex, itemIndex) {
     if (state.plates[personIndex] && state.plates[personIndex].items) {
         state.plates[personIndex].items.splice(itemIndex, 1);
         renderPlatesUI();
+        broadcastPlatesChange();
     }
 };
 
@@ -2375,33 +2364,53 @@ window.promptAddItemToPlate = function(personIndex) {
     const plate = state.plates[personIndex];
     if (!plate) return;
 
-    const itemName = prompt('Eklenecek ürünün adı:\n(Örn: Ayran, Kola, Lahmacun, Çorba, Tatlı, Patates)');
+    const itemName = prompt('Tabağa eklenecek lezzet veya içecek:\n(Örn: 3 Lahmacun, Ayran, Kola, 2 Et Döner, Patates, Su)');
     if (!itemName || !itemName.trim()) return;
 
-    const cleanName = itemName.trim();
-    const defaultPrice = /kola/i.test(cleanName) ? 50 : /ayran/i.test(cleanName) ? 35 : /su/i.test(cleanName) ? 15 : /lahmacun/i.test(cleanName) ? 110 : 60;
+    let cleanName = itemName.trim();
+    let qty = 1;
+
+    // "3 lahmacun", "2 döner", "4x ayran" gibi adet ön ekini akıllıca yakala
+    const qtyMatch = cleanName.match(/^(\d+)\s*x?\s+(.+)$/i);
+    if (qtyMatch) {
+        qty = parseInt(qtyMatch[1], 10) || 1;
+        cleanName = qtyMatch[2].trim();
+    }
+
+    const defaultPrice = /kola/i.test(cleanName) ? 50 : 
+                         /ayran/i.test(cleanName) ? 35 : 
+                         /su/i.test(cleanName) ? 15 : 
+                         /lahmacun/i.test(cleanName) ? 110 : 
+                         /döner|dürüm|kebap/i.test(cleanName) ? 220 : 
+                         /burger/i.test(cleanName) ? 250 : 
+                         /pizza/i.test(cleanName) ? 240 : 80;
     
-    const priceStr = prompt(`"${cleanName}" için birim fiyat (₺):`, String(defaultPrice));
-    const price = parseFloat(priceStr) || defaultPrice;
+    const priceStr = prompt(`"${cleanName}" için 1 adet birim fiyatı (₺):`, String(defaultPrice));
+    const unitPrice = parseFloat(priceStr) || defaultPrice;
 
     if (!plate.items) plate.items = [];
 
     // Eğer aynı isimde ürün zaten varsa adedini artır
     const existing = plate.items.find(it => it.name.trim().toLowerCase() === cleanName.toLowerCase());
     if (existing) {
-        existing.qty = (existing.qty || 1) + 1;
-        existing.unitPrice = existing.unitPrice || price;
+        existing.qty = (existing.qty || 1) + qty;
+        existing.unitPrice = existing.unitPrice || unitPrice;
         existing.price = Math.round(existing.qty * existing.unitPrice);
     } else {
         const isDrink = /ayran|kola|su|şalgam|fanta|gazoz|çay|kahve/i.test(cleanName);
-        const emoji = isDrink ? '🥤' : /lahmacun|pizza/i.test(cleanName) ? '🍕' : /döner|dürüm/i.test(cleanName) ? '🌯' : /patates/i.test(cleanName) ? '🍟' : '🍽️';
+        const emoji = isDrink ? '🥤' : 
+                      /lahmacun|pizza/i.test(cleanName) ? '🍕' : 
+                      /döner|dürüm/i.test(cleanName) ? '🌯' : 
+                      /burger/i.test(cleanName) ? '🍔' : 
+                      /patates/i.test(cleanName) ? '🍟' : 
+                      /tatlı|künefe|baklava/i.test(cleanName) ? '🍰' : '🍽️';
 
         plate.items.push({
-            id: 'it_add_' + Date.now(),
+            id: 'it_add_' + Date.now() + Math.random().toString(36).substr(2, 4),
             name: cleanName,
-            qty: 1,
-            unitPrice: price,
-            price: price,
+            qty: qty,
+            unitPrice: unitPrice,
+            price: Math.round(qty * unitPrice),
             emoji: emoji,
             type: isDrink ? 'drink' : 'food'
         });
@@ -2410,6 +2419,7 @@ window.promptAddItemToPlate = function(personIndex) {
     audio.init();
     audio.tick();
     renderPlatesUI();
+    broadcastPlatesChange();
 };
 
 

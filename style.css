@@ -1912,3 +1912,33 @@ body {
 .chip.clickable:active {
     transform: scale(0.97);
 }
+
+/* Boş Tabak Görünümü */
+.empty-plate-hint {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1.5px dashed rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    padding: 16px 12px;
+    text-align: center;
+    margin-bottom: 12px;
+    transition: border-color 0.2s ease;
+}
+.empty-plate-hint:hover {
+    border-color: rgba(249, 115, 22, 0.4);
+}
+.empty-plate-hint .empty-icon {
+    font-size: 28px;
+    display: block;
+    margin-bottom: 4px;
+}
+.empty-plate-hint strong {
+    color: #e2e8f0;
+    font-size: 14px;
+    display: block;
+    margin-bottom: 2px;
+}
+.empty-plate-hint p {
+    color: #94a3b8;
+    font-size: 12px;
+    margin: 4px 0 10px;
+}
