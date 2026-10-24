@@ -44,6 +44,19 @@
             </div>
         </header>
 
+        <!-- CANLI SİPARİŞ ZAMANLAYICISI / GERİ SAYIM (Gelen gelir!) -->
+        <div id="roomTimerBar" class="room-timer-bar" style="display: none;">
+            <div class="timer-bar-content">
+                <span class="timer-pulse-icon">⏱️</span>
+                <span class="timer-message">Sipariş Kapanışına:</span>
+                <strong id="timerCountdownDisplay" class="timer-digits">10:00</strong>
+                <span class="timer-sub-tag">Gelen gelir, gelmeyen aç kalır!</span>
+            </div>
+            <button type="button" class="btn-timer-extend" id="btnExtendTimer" title="Süreye 2 dakika ekle">
+                +2 Dk Ekle
+            </button>
+        </div>
+
         <!-- MAIN SCREENS CONTAINER -->
         <main class="screens-viewport">
             
@@ -102,7 +115,20 @@
                             <i class="fa-solid fa-utensils input-icon"></i>
                             <input type="text" id="createRoomNameInput" placeholder="Oda Adı (Örn: Kebap Ziyafeti, Ofis Ekibi)">
                         </div>
-                        <button class="btn btn-primary btn-block mt-3" id="btnCreateRoom">
+
+                        <div class="room-timer-setting mt-3">
+                            <label class="input-label" style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px;">
+                                <i class="fa-solid fa-stopwatch text-orange"></i> Sipariş Zamanlayıcısı (Gelen gelir!):
+                            </label>
+                            <div class="timer-chips-group" id="createTimerChips">
+                                <button type="button" class="timer-chip" data-mins="5">⚡ 5 Dk (Çok Acıktım!)</button>
+                                <button type="button" class="timer-chip active" data-mins="10">⏱️ 10 Dk (Hızlı)</button>
+                                <button type="button" class="timer-chip" data-mins="15">⏳ 15 Dk (Standart)</button>
+                                <button type="button" class="timer-chip" data-mins="0">♾️ Süresiz</button>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-block mt-2" id="btnCreateRoom">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> Odayı Kur & Başlat
                         </button>
                     </div>
@@ -135,6 +161,19 @@
                         <button class="btn btn-sm btn-whatsapp" id="btnShareWhatsApp">
                             <i class="fa-brands fa-whatsapp"></i> WhatsApp'ta Davet Et
                         </button>
+                    </div>
+
+                    <div class="active-room-timer-row flex-between align-center mt-3 mb-2">
+                        <div style="font-size: 13px;">
+                            <i class="fa-solid fa-stopwatch text-orange"></i> <strong>Sipariş Sayacı:</strong>
+                            <span id="activeRoomTimerLabel" style="color: #fbbf24; font-weight: 700;">10 Dakika</span>
+                        </div>
+                        <div class="timer-chips-group mb-0" id="activeTimerChips">
+                            <button type="button" class="timer-chip btn-xs" data-mins="5">5 Dk</button>
+                            <button type="button" class="timer-chip btn-xs active" data-mins="10">10 Dk</button>
+                            <button type="button" class="timer-chip btn-xs" data-mins="15">15 Dk</button>
+                            <button type="button" class="timer-chip btn-xs" data-mins="0">Süresiz</button>
+                        </div>
                     </div>
 
                     <div class="participants-box">

@@ -1680,3 +1680,112 @@ body {
     text-align: center;
     padding: 0 2px;
 }
+
+
+/* Live Order Countdown Timer Bar (Gelen Gelir!) */
+.room-timer-bar {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.22) 0%, rgba(239, 68, 68, 0.28) 100%);
+    border: 1px solid rgba(249, 115, 22, 0.45);
+    border-radius: 14px;
+    padding: 10px 16px;
+    margin: 10px 16px 16px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    animation: fadeIn 0.3s ease-out;
+    box-shadow: 0 4px 18px rgba(249, 115, 22, 0.18);
+}
+.room-timer-bar.timer-urgent {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.4) 0%, rgba(220, 38, 38, 0.5) 100%);
+    border-color: #ef4444;
+    animation: timerPulse 1.2s infinite alternate;
+}
+@keyframes timerPulse {
+    0% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.4); }
+    100% { box-shadow: 0 0 20px 4px rgba(239, 68, 68, 0.7); }
+}
+.timer-bar-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.timer-digits {
+    font-family: monospace, sans-serif;
+    font-size: 19px;
+    font-weight: 800;
+    color: #fb923c;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 3px 9px;
+    border-radius: 7px;
+    border: 1px solid rgba(249, 115, 22, 0.35);
+    letter-spacing: 1px;
+}
+.timer-urgent .timer-digits {
+    color: #fca5a5;
+    border-color: #ef4444;
+    background: rgba(153, 27, 27, 0.5);
+}
+.timer-sub-tag {
+    font-size: 11px;
+    color: #e2e8f0;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 2px 7px;
+    border-radius: 6px;
+}
+.btn-timer-extend {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+.btn-timer-extend:hover {
+    background: rgba(249, 115, 22, 0.35);
+    border-color: #f97316;
+    transform: scale(1.04);
+}
+
+/* Timer Chip Presets */
+.timer-chips-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+    margin-bottom: 8px;
+}
+.timer-chip {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+    padding: 6px 11px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.timer-chip:hover {
+    background: rgba(249, 115, 22, 0.18);
+    border-color: rgba(249, 115, 22, 0.45);
+    color: white;
+}
+.timer-chip.active {
+    background: rgba(249, 115, 22, 0.25);
+    border-color: #f97316;
+    color: #f97316;
+    font-weight: 700;
+}
+.active-room-timer-row {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 8px 12px;
+}

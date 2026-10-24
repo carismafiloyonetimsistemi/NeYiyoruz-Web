@@ -178,6 +178,10 @@ const els = {
     btnCloseLikedModal: document.getElementById('btnCloseLikedModal'),
     btnSpinWheelLikedFoods: document.getElementById('btnSpinWheelLikedFoods'),
     btnAddAllLikedToPlate: document.getElementById('btnAddAllLikedToPlate'),
+    roomTimerBar: document.getElementById('roomTimerBar'),
+    timerCountdownDisplay: document.getElementById('timerCountdownDisplay'),
+    btnExtendTimer: document.getElementById('btnExtendTimer'),
+    activeRoomTimerLabel: document.getElementById('activeRoomTimerLabel'),
     wheelBadge: document.getElementById('wheelBadge'),
     wheelTitle: document.getElementById('wheelTitle'),
     wheelSubDesc: document.getElementById('wheelSubDesc'),
@@ -669,7 +673,13 @@ function createRoom(title) {
         code: code,
         title: roomTitle,
         participants: participants,
+        timerMinutes: selectedTimerMinutes,
+        timerEndTime: selectedTimerMinutes > 0 ? (Date.now() + selectedTimerMinutes * 60 * 1000) : null
     };
+
+    if (selectedTimerMinutes > 0) {
+        startRoomCountdown(state.room.timerEndTime);
+    }
 
     renderActiveRoom();
 }
@@ -768,7 +778,11 @@ els.btnJoinRoom.addEventListener('click', () => {
 els.btnShareWhatsApp.addEventListener('click', () => {
     if (!state.room) return;
     const shareUrl = `${window.location.origin}${window.location.pathname}?room=${state.room.code}`;
-    const text = encodeURIComponent(`🍕 Ne Yiyoruz? uygulamasına katıl, bugün hangi restoranda ne yiyeceğimizi birlikte seçelim!\n\nOda Kodu: ${state.room.code}\nKatılmak için tıkla: ${shareUrl}`);
+    let timerMsg = '';
+    if (state.room.timerMinutes && state.room.timerMinutes > 0) {
+        timerMsg = `\n⏱️ DİKKAT: Sipariş için son ${state.room.timerMinutes} dakika! Gelen gelir, gelmeyen aç kalır!\n`;
+    }
+    const text = encodeURIComponent(`🍕 Ne Yiyoruz? uygulamasına katıl, siparişleri topluyoruz!${timerMsg}\nOda Kodu: ${state.room.code}\nKatılmak için tıkla: ${shareUrl}`);
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
 });
 
@@ -2022,3 +2036,131 @@ function showFoodWheelResult(foodObj) {
         els.runnerResultBox.scrollIntoView({ behavior: 'smooth' });
     }
 }
+
+
+// --- 13. CANLI SİPARİŞ ZAMANLAYICISI (GELEN GELİR, GELMEYEN AÇ KALIR!) ---
+let roomTimerInterval = null;
+let selectedTimerMinutes = 10;
+
+function setupTimerPresetListeners() {
+    const createChips = document.querySelectorAll('#createTimerChips .timer-chip');
+    createChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            createChips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            selectedTimerMinutes = parseInt(chip.dataset.mins) || 0;
+        });
+    });
+
+    const activeChips = document.querySelectorAll('#activeTimerChips .timer-chip');
+    activeChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            activeChips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            const mins = parseInt(chip.dataset.mins) || 0;
+            setRoomTimer(mins);
+        });
+    });
+
+    if (els.btnExtendTimer) {
+        els.btnExtendTimer.addEventListener('click', () => {
+            extendRoomTimer(2);
+        });
+    }
+}
+
+function setRoomTimer(minutes) {
+    selectedTimerMinutes = minutes;
+    if (els.activeRoomTimerLabel) {
+        els.activeRoomTimerLabel.innerText = minutes > 0 ? `${minutes} Dakika` : 'Süresiz';
+    }
+
+    if (minutes <= 0) {
+        // Süresiz
+        clearInterval(roomTimerInterval);
+        roomTimerInterval = null;
+        if (state.room) {
+            state.room.timerEndTime = null;
+            state.room.timerMinutes = 0;
+        }
+        if (els.roomTimerBar) els.roomTimerBar.style.display = 'none';
+        return;
+    }
+
+    const endTime = Date.now() + minutes * 60 * 1000;
+    if (state.room) {
+        state.room.timerEndTime = endTime;
+        state.room.timerMinutes = minutes;
+    }
+
+    startRoomCountdown(endTime);
+}
+
+function startRoomCountdown(endTime) {
+    clearInterval(roomTimerInterval);
+    if (!els.roomTimerBar) return;
+
+    els.roomTimerBar.style.display = 'flex';
+    updateTimerDisplay(endTime);
+
+    roomTimerInterval = setInterval(() => {
+        const remaining = endTime - Date.now();
+        if (remaining <= 0) {
+            clearInterval(roomTimerInterval);
+            roomTimerInterval = null;
+            onRoomTimerExpired();
+        } else {
+            updateTimerDisplay(endTime);
+        }
+    }, 1000);
+}
+
+function updateTimerDisplay(endTime) {
+    const remaining = Math.max(0, endTime - Date.now());
+    const totalSeconds = Math.floor(remaining / 1000);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+
+    const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    if (els.timerCountdownDisplay) {
+        els.timerCountdownDisplay.innerText = formatted;
+    }
+
+    if (els.roomTimerBar) {
+        if (totalSeconds <= 60 && totalSeconds > 0) {
+            els.roomTimerBar.classList.add('timer-urgent');
+        } else {
+            els.roomTimerBar.classList.remove('timer-urgent');
+        }
+    }
+}
+
+function extendRoomTimer(additionalMinutes) {
+    if (!state.room || !state.room.timerEndTime) {
+        setRoomTimer(additionalMinutes);
+        return;
+    }
+    state.room.timerEndTime += additionalMinutes * 60 * 1000;
+    startRoomCountdown(state.room.timerEndTime);
+    audio.init();
+    audio.fanfare();
+    alert(`⏱️ Sipariş süresi +${additionalMinutes} dakika uzatıldı!`);
+}
+
+function onRoomTimerExpired() {
+    audio.fanfare();
+    if (els.roomTimerBar) {
+        els.roomTimerBar.classList.add('timer-urgent');
+        if (els.timerCountdownDisplay) els.timerCountdownDisplay.innerText = '00:00';
+    }
+
+    alert('⏰ SÜRE DOLDU!\\n\\nZaman bitti! Odaya henüz katılmayanlar elendi. Sipariş mevcut katılımcılarla kilitlendi.');
+
+    // Kalan katılımcılarla doğrudan sepete geç
+    renderResultScreen();
+    navigateTo('screen-result');
+}
+
+// Wire setupTimerPresetListeners on load
+document.addEventListener('DOMContentLoaded', setupTimerPresetListeners);
+setupTimerPresetListeners();
