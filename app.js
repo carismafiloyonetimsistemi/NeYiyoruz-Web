@@ -110,6 +110,24 @@ const els = {
     logoutBtn: document.getElementById('logoutBtn'),
     guestNameInput: document.getElementById('guestNameInput'),
     btnGuestStart: document.getElementById('btnGuestStart'),
+    btnShowLogin: document.getElementById('btnShowLogin'),
+    emailAuthModal: document.getElementById('emailAuthModal'),
+    btnCloseAuthModal: document.getElementById('btnCloseAuthModal'),
+    tabLoginBtn: document.getElementById('tabLoginBtn'),
+    tabRegisterBtn: document.getElementById('tabRegisterBtn'),
+    authModalHeaderTitle: document.getElementById('authModalHeaderTitle'),
+    authAlert: document.getElementById('authAlert'),
+    authAlertText: document.getElementById('authAlertText'),
+    emailAuthForm: document.getElementById('emailAuthForm'),
+    authNameGroup: document.getElementById('authNameGroup'),
+    authNameInput: document.getElementById('authNameInput'),
+    authEmailInput: document.getElementById('authEmailInput'),
+    authPasswordInput: document.getElementById('authPasswordInput'),
+    btnTogglePassword: document.getElementById('btnTogglePassword'),
+    pwdEyeIcon: document.getElementById('pwdEyeIcon'),
+    btnAuthSubmit: document.getElementById('btnAuthSubmit'),
+    authSwitchPrompt: document.getElementById('authSwitchPrompt'),
+    btnToggleAuthMode: document.getElementById('btnToggleAuthMode'),
     createRoomNameInput: document.getElementById('createRoomNameInput'),
     btnCreateRoom: document.getElementById('btnCreateRoom'),
     joinRoomCodeInput: document.getElementById('joinRoomCodeInput'),
@@ -210,18 +228,45 @@ els.navTabs.forEach(tab => {
 });
 
 // --- 6. GUEST & USER AUTH ---
-function loginAsGuest(name) {
-    audio.init();
-    const cleanName = (name || 'Misafir').trim();
-    state.user = {
-        name: cleanName,
-        avatar: ['😎', '🍕', '🚀', '🔥', '🦁', '🌟'][Math.floor(Math.random() * 6)],
-        isGuest: true,
-    };
-    localStorage.setItem('neyiyoruz_user', JSON.stringify(state.user));
+let currentAuthMode = 'login'; // 'login' or 'register'
+
+// Seed initial registered users if not present
+function getRegisteredUsers() {
+    try {
+        const stored = localStorage.getItem('neyiyoruz_registered_users');
+        if (stored) {
+            return JSON.parse(stored);
+        }
+    } catch (e) {
+        console.error('Error reading registered users', e);
+    }
+    // Default initial demo user
+    const initialUsers = [
+        {
+            name: 'Ersoy',
+            email: 'ersoy@neyiyoruz.com',
+            password: 'password123',
+            avatar: '👨‍🍳',
+            isGuest: false,
+            createdAt: new Date().toISOString()
+        }
+    ];
+    localStorage.setItem('neyiyoruz_registered_users', JSON.stringify(initialUsers));
+    return initialUsers;
+}
+
+function saveRegisteredUser(user) {
+    const users = getRegisteredUsers();
+    users.push(user);
+    localStorage.setItem('neyiyoruz_registered_users', JSON.stringify(users));
+}
+
+function setUserSession(user) {
+    state.user = user;
+    localStorage.setItem('neyiyoruz_user', JSON.stringify(user));
 
     els.displayUsername.innerText = state.user.name;
-    els.userAvatar.innerText = state.user.avatar;
+    els.userAvatar.innerText = state.user.avatar || '😎';
     els.userBadge.style.display = 'flex';
 
     navigateTo('screen-lobby');
@@ -231,6 +276,205 @@ function loginAsGuest(name) {
     if (roomParam) {
         joinRoom(roomParam);
     }
+}
+
+function loginAsGuest(name) {
+    audio.init();
+    const cleanName = (name || 'Misafir').trim();
+    const guestUser = {
+        name: cleanName,
+        avatar: ['😎', '🍕', '🚀', '🔥', '🦁', '🌟'][Math.floor(Math.random() * 6)],
+        isGuest: true,
+    };
+    setUserSession(guestUser);
+}
+
+function showAuthAlert(msg, isSuccess = false) {
+    els.authAlert.style.display = 'flex';
+    els.authAlert.className = 'auth-alert' + (isSuccess ? ' success' : '');
+    els.authAlertText.innerText = msg;
+    const icon = els.authAlert.querySelector('.auth-alert-icon');
+    if (icon) {
+        icon.className = isSuccess ? 'fa-solid fa-circle-check auth-alert-icon' : 'fa-solid fa-circle-exclamation auth-alert-icon';
+    }
+}
+
+function clearAuthAlert() {
+    els.authAlert.style.display = 'none';
+    els.authAlertText.innerText = '';
+}
+
+function setAuthMode(mode) {
+    currentAuthMode = mode;
+    clearAuthAlert();
+
+    if (mode === 'login') {
+        els.tabLoginBtn.classList.add('active');
+        els.tabRegisterBtn.classList.remove('active');
+        els.authModalHeaderTitle.innerText = 'Hesabına Giriş Yap';
+        els.authNameGroup.style.display = 'none';
+        els.authNameInput.removeAttribute('required');
+        els.btnAuthSubmit.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Giriş Yap';
+        els.authSwitchPrompt.innerText = 'Hesabın yok mu?';
+        els.btnToggleAuthMode.innerText = 'Hemen Ücretsiz Kayıt Ol';
+    } else {
+        els.tabLoginBtn.classList.remove('active');
+        els.tabRegisterBtn.classList.add('active');
+        els.authModalHeaderTitle.innerText = 'Yeni Hesap Oluştur';
+        els.authNameGroup.style.display = 'block';
+        els.authNameInput.setAttribute('required', 'required');
+        els.btnAuthSubmit.innerHTML = '<i class="fa-solid fa-user-plus"></i> Kayıt Ol ve Başla';
+        els.authSwitchPrompt.innerText = 'Zaten hesabın var mı?';
+        els.btnToggleAuthMode.innerText = 'Giriş Yap';
+    }
+}
+
+function openAuthModal(mode = 'login') {
+    audio.init();
+    setAuthMode(mode);
+    els.emailAuthModal.classList.add('active');
+    setTimeout(() => {
+        if (mode === 'register') {
+            els.authNameInput.focus();
+        } else {
+            els.authEmailInput.focus();
+        }
+    }, 100);
+}
+
+function closeAuthModal() {
+    els.emailAuthModal.classList.remove('active');
+    clearAuthAlert();
+    els.emailAuthForm.reset();
+    els.authPasswordInput.type = 'password';
+    els.pwdEyeIcon.className = 'fa-solid fa-eye';
+}
+
+function handleAuthSubmit() {
+    audio.init();
+    clearAuthAlert();
+
+    const email = (els.authEmailInput.value || '').trim().toLowerCase();
+    const password = (els.authPasswordInput.value || '').trim();
+    const name = (els.authNameInput.value || '').trim();
+
+    // Validations
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+        showAuthAlert('Lütfen geçerli bir e-posta adresi giriniz (Örn: adiniz@ornek.com).');
+        els.authEmailInput.focus();
+        return;
+    }
+
+    if (!password || password.length < 6) {
+        showAuthAlert('Şifre en az 6 karakter uzunluğunda olmalıdır.');
+        els.authPasswordInput.focus();
+        return;
+    }
+
+    const users = getRegisteredUsers();
+
+    if (currentAuthMode === 'register') {
+        if (!name) {
+            showAuthAlert('Lütfen adınızı veya takma adınızı giriniz.');
+            els.authNameInput.focus();
+            return;
+        }
+
+        const existingUser = users.find(u => u.email.toLowerCase() === email);
+        if (existingUser) {
+            showAuthAlert('Bu e-posta adresiyle zaten bir hesap var! Giriş sekmesinden giriş yapabilirsiniz.');
+            return;
+        }
+
+        const avatars = ['😎', '🍕', '🚀', '🔥', '🦁', '🌟', '👨‍🍳', '🍲', '🥑', '🌮'];
+        const newUser = {
+            name: name,
+            email: email,
+            password: password,
+            avatar: avatars[Math.floor(Math.random() * avatars.length)],
+            isGuest: false,
+            createdAt: new Date().toISOString()
+        };
+
+        saveRegisteredUser(newUser);
+        showAuthAlert('Hesabınız başarıyla oluşturuldu! Giriş yapılıyor...', true);
+        audio.fanfare();
+
+        setTimeout(() => {
+            closeAuthModal();
+            setUserSession(newUser);
+        }, 600);
+    } else {
+        // Login mode
+        const foundUser = users.find(u => u.email.toLowerCase() === email);
+
+        if (!foundUser) {
+            // Not registered yet
+            showAuthAlert('Bu e-posta adresine ait kayıtlı hesap bulunamadı. "Kayıt Ol" sekmesinden yeni hesap açabilirsiniz.');
+            return;
+        }
+
+        if (foundUser.password !== password) {
+            showAuthAlert('Girdiğiniz şifre hatalı! Lütfen tekrar deneyiniz.');
+            els.authPasswordInput.focus();
+            return;
+        }
+
+        showAuthAlert(`Hoş geldin ${foundUser.name}! Giriş başarılı...`, true);
+        audio.fanfare();
+
+        setTimeout(() => {
+            closeAuthModal();
+            setUserSession(foundUser);
+        }, 500);
+    }
+}
+
+// Event Listeners for Auth
+if (els.btnShowLogin) {
+    els.btnShowLogin.addEventListener('click', () => openAuthModal('login'));
+}
+
+if (els.btnCloseAuthModal) {
+    els.btnCloseAuthModal.addEventListener('click', closeAuthModal);
+}
+
+if (els.tabLoginBtn) {
+    els.tabLoginBtn.addEventListener('click', () => setAuthMode('login'));
+}
+
+if (els.tabRegisterBtn) {
+    els.tabRegisterBtn.addEventListener('click', () => setAuthMode('register'));
+}
+
+if (els.btnToggleAuthMode) {
+    els.btnToggleAuthMode.addEventListener('click', () => {
+        setAuthMode(currentAuthMode === 'login' ? 'register' : 'login');
+    });
+}
+
+if (els.btnTogglePassword) {
+    els.btnTogglePassword.addEventListener('click', () => {
+        const isPassword = els.authPasswordInput.type === 'password';
+        els.authPasswordInput.type = isPassword ? 'text' : 'password';
+        els.pwdEyeIcon.className = isPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+    });
+}
+
+if (els.emailAuthForm) {
+    els.emailAuthForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleAuthSubmit();
+    });
+}
+
+if (els.emailAuthModal) {
+    els.emailAuthModal.addEventListener('click', (e) => {
+        if (e.target === els.emailAuthModal) {
+            closeAuthModal();
+        }
+    });
 }
 
 els.btnGuestStart.addEventListener('click', () => {

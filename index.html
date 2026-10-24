@@ -516,6 +516,81 @@
         </div>
     </div>
 
+    <!-- MODAL 3: E-Posta ile Giriş & Kayıt Modalı -->
+    <div class="modal" id="emailAuthModal">
+        <div class="modal-card modal-auth">
+            <div class="modal-header-row">
+                <div class="auth-modal-title">
+                    <span class="auth-icon-badge"><i class="fa-solid fa-user-lock"></i></span>
+                    <h3 id="authModalHeaderTitle">Hesabına Giriş Yap</h3>
+                </div>
+                <button class="btn-close-modal" id="btnCloseAuthModal" type="button">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Giriş / Kayıt Tab Butonları -->
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab-btn active" id="tabLoginBtn">
+                    <i class="fa-solid fa-right-to-bracket"></i> Giriş Yap
+                </button>
+                <button type="button" class="auth-tab-btn" id="tabRegisterBtn">
+                    <i class="fa-solid fa-user-plus"></i> Kayıt Ol
+                </button>
+            </div>
+
+            <!-- Geri Bildirim / Hata Mesajı -->
+            <div class="auth-alert" id="authAlert" style="display: none;">
+                <i class="fa-solid fa-circle-exclamation auth-alert-icon"></i>
+                <span id="authAlertText">Hata mesajı</span>
+            </div>
+
+            <form id="emailAuthForm" onsubmit="return false;">
+                <!-- Ad Soyad / Lakap (Sadece Kayıt Olurken Görünür) -->
+                <div class="input-group-auth" id="authNameGroup" style="display: none;">
+                    <label for="authNameInput"><i class="fa-solid fa-id-card"></i> Adın / Lakabın</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user input-icon"></i>
+                        <input type="text" id="authNameInput" placeholder="Örn: Ersoy veya Gurme" maxlength="25" autocomplete="name">
+                    </div>
+                </div>
+
+                <!-- E-Posta -->
+                <div class="input-group-auth">
+                    <label for="authEmailInput"><i class="fa-solid fa-envelope"></i> E-Posta Adresi</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-at input-icon"></i>
+                        <input type="email" id="authEmailInput" placeholder="ornek@eposta.com" required autocomplete="email">
+                    </div>
+                </div>
+
+                <!-- Şifre -->
+                <div class="input-group-auth">
+                    <label for="authPasswordInput"><i class="fa-solid fa-key"></i> Şifre</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input type="password" id="authPasswordInput" placeholder="En az 6 karakter" required autocomplete="current-password">
+                        <button type="button" class="btn-toggle-pwd" id="btnTogglePassword" title="Şifreyi Göster/Gizle">
+                            <i class="fa-solid fa-eye" id="pwdEyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Buton -->
+                <button type="submit" class="btn btn-primary btn-block btn-pulse mt-3" id="btnAuthSubmit">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Giriş Yap
+                </button>
+            </form>
+
+            <div class="auth-switch-footer">
+                <span id="authSwitchPrompt">Hesabın yok mu?</span>
+                <button type="button" class="btn-switch-link" id="btnToggleAuthMode">
+                    Hemen Ücretsiz Kayıt Ol
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
