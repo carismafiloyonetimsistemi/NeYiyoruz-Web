@@ -2650,50 +2650,7 @@ function renderHistoryScreen() {
         `).join('');
     }
 
-    // 2. GEÇMİŞ SİPARİŞLER (Arşiv Kayıtları)
-    if (!els.votingHistoryList) return;
-
-    if (state.debtsHistory.length === 0) {
-        els.votingHistoryList.innerHTML = `
-            <div class="small-text text-center py-2" style="color: #94a3b8;">Henüz kaydedilmiş bir sipariş geçmişi yok.</div>
-        `;
-    } else {
-        els.votingHistoryList.innerHTML = state.debtsHistory.map((h, histIdx) => {
-            const isHistCreditor = Boolean(currentUserName && currentUserName.toLowerCase() === (h.runner || '').toLowerCase());
-            return `
-            <div class="history-item">
-                <div class="history-left flex-between">
-                    <div>
-                        <strong>${h.cuisine || 'Yemek Siparişi'} (${h.total} ₺)</strong>
-                        <span>Tarih: ${h.date} • Siparişçi / Alacaklı: <strong style="color:#fbbf24;">${h.runner}</strong></span>
-                    </div>
-                    ${isHistCreditor ? `
-                        <button type="button" class="btn-xs btn-ghost text-danger" onclick="deleteHistoryRecord(${histIdx})" title="Bu sipariş kaydını sil">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    ` : ''}
-                </div>
-                <div class="history-breakdown mt-2">
-                    ${(h.plates || []).map(p => `
-                        <div class="flex-between py-1" style="border-bottom: 1px dashed rgba(255,255,255,0.06);">
-                            <span>• ${p.person}: ${p.dish || 'Sipariş'} (${p.price} ₺)</span>
-                            <span style="font-weight:700; color: ${p.paid ? '#34d399' : '#f87171'};">${p.paid ? '✓ Ödedi' : '❌ Borçlu'}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            `;
-        }).join('');
-    }
 }
-
-window.deleteHistoryRecord = function(histIdx) {
-    if (!confirm('Bu sipariş kaydını geçmişten silmek istediğinize emin misiniz?')) return;
-    state.debtsHistory.splice(histIdx, 1);
-    localStorage.setItem('neyiyoruz_debts_history', JSON.stringify(state.debtsHistory));
-    renderHistoryScreen();
-    broadcastRoomState();
-};
 
 // --- 13. PROMO & INIT ---
 els.btnCopyPromo.addEventListener('click', () => {
