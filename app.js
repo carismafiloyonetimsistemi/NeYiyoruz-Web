@@ -920,21 +920,7 @@ function renderActiveRoom() {
                 <button type="button" class="chip-delete-btn" onclick="removeParticipantFromRoom(${idx})" title="Odadakilerden Çıkar">&times;</button>
             ` : ''}
         </span>
-    `).join('') + `
-        <button type="button" class="chip-add-btn" id="btnQuickAddFriend">
-            <i class="fa-solid fa-user-plus"></i> + Kişi Ekle
-        </button>
-    `;
-
-    const addBtn = document.getElementById('btnQuickAddFriend');
-    if (addBtn) {
-        addBtn.onclick = () => {
-            const name = prompt('Odaya eklenecek kişinin adını yazın:');
-            if (name && name.trim()) {
-                window.addParticipantToRoom(name.trim());
-            }
-        };
-    }
+    `).join('');
 
     drawWheel();
     populateVolunteerSelect();
@@ -1774,17 +1760,7 @@ function renderWheelParticipants() {
                 ${isRunner ? '<span class="runner-badge-tag">👑 Siparişçi</span>' : ''}
             </span>
         `;
-    }).join('') ;
-
-    const innerAdd = document.getElementById('btnWheelInnerAdd');
-    if (innerAdd) {
-        innerAdd.onclick = () => {
-            const name = prompt('Odaya ve siparişçiye eklenecek kişinin adını yazın:');
-            if (name && name.trim()) {
-                window.addParticipantToRoom(name.trim());
-            }
-        };
-    }
+    }).join('');
 }
 
 function populateVolunteerSelect() {
