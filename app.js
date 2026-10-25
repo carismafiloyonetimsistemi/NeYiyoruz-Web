@@ -2015,8 +2015,9 @@ function setupPlatesData() {
                 state.plates.push({
                     person: person,
                     isRunner: isRunner,
-                    paid: isRunner, // Sadece runner true, yeni katılan herkes kesinlikle false (borçlu)!
+                    paid: isRunner, // Sadece runner ödeyen, yeni katılan herkes KESİNLİKLE borçludur (paid: false)
                     debtAmount: null,
+                    settledByCreditor: false,
                     items: []
                 });
             }
@@ -2028,8 +2029,13 @@ function setupPlatesData() {
             p.isRunner = isRunner;
             if (isRunner) {
                 p.paid = true;
-            } else if (p.paid === undefined) {
-                p.paid = false;
+                p.debtAmount = 0;
+            } else {
+                // Runner olmayan hiç kimse otomatik tahsil edildi yapılamaz!
+                // Sadece alacaklı bizzat onayladıysa true kalır
+                if (!p.settledByCreditor) {
+                    p.paid = false;
+                }
             }
         });
         return;
@@ -2040,8 +2046,9 @@ function setupPlatesData() {
         return {
             person: person,
             isRunner: isRunner,
-            paid: isRunner, // Odaya katılan herkes başlangıçta borçlu, sadece runner ödeyen!
+            paid: isRunner,
             debtAmount: null,
+            settledByCreditor: false,
             items: []
         };
     });
@@ -2178,19 +2185,20 @@ function renderPlatesUI() {
                 <div class="plate-status-row">
                     ${(() => {
                         const isCreditor = Boolean(currentUserName && currentUserName.toLowerCase() === currentRunner.toLowerCase());
+                        const isSettled = Boolean(plate.paid && (plate.isRunner || plate.settledByCreditor));
                         const remaining = (plate.debtAmount !== null && plate.debtAmount !== undefined) ? plate.debtAmount : personTotal;
-                        const statusText = plate.paid ? 
-                            (plate.isRunner ? '👑 Siparişi Ödeyen' : '✓ Tahsil Edildi (Ödedi)') : 
-                            (personTotal > 0 ? '❌ ' + currentRunner + '\'e Borçlu (' + remaining + ' ₺)' : '⚪ Sipariş Bekleniyor');
+                        const statusText = plate.isRunner ? 
+                            '👑 Siparişi Ödeyen' : 
+                            (isSettled ? '✓ Tahsil Edildi' : (personTotal > 0 ? '❌ ' + currentRunner + '\'e Borçlu (' + remaining + ' ₺)' : '⚪ Sipariş Bekleniyor'));
 
                         if (isCreditor) {
-                            return `<button type="button" class="debt-status-btn ${plate.paid ? 'status-paid' : 'status-debt'}" 
+                            return `<button type="button" class="debt-status-btn ${isSettled ? 'status-paid' : 'status-debt'}" 
                                             onclick="togglePlatePaid(${index})" 
                                             title="Alacaklısınız: Ödeme durumunu değiştirmek için tıklayın">
                                         ${statusText}
                                     </button>`;
                         } else {
-                            return `<div class="debt-status-badge ${plate.paid ? 'status-paid' : 'status-debt'}" 
+                            return `<div class="debt-status-badge ${isSettled ? 'status-paid' : 'status-debt'}" 
                                          title="Ödeme ve tahsilat durumunu yalnızca siparişçi (${currentRunner}) güncelleyebilir">
                                         ${statusText}
                                     </div>`;
@@ -2362,10 +2370,11 @@ window.togglePlatePaid = function(index) {
 
     if (state.plates[index]) {
         state.plates[index].paid = !state.plates[index].paid;
+        state.plates[index].settledByCreditor = state.plates[index].paid;
         if (state.plates[index].paid) {
             state.plates[index].debtAmount = 0;
         } else {
-            state.plates[index].debtAmount = null; // Sıfırlayıp tam tutara döndür
+            state.plates[index].debtAmount = null;
         }
         audio.init();
         audio.tick();
@@ -2397,7 +2406,8 @@ window.promptEditPlateDebt = function(index) {
     if (!plate) return;
 
     const personTotal = (plate.items || []).reduce((sum, it) => sum + (parseFloat(it.price) || 0), 0);
-    const currentRemaining = (plate.debtAmount !== null && plate.debtAmount !== undefined) ? plate.debtAmount : (plate.paid ? 0 : personTotal);
+    const isSettled = Boolean(plate.paid && plate.settledByCreditor);
+    const currentRemaining = (plate.debtAmount !== null && plate.debtAmount !== undefined) ? plate.debtAmount : (isSettled ? 0 : personTotal);
 
     const input = prompt(
         `"${plate.person}" adlı kişiden kalan alacak tutarını girin (₺):\n\n(Toplam Hesap: ${personTotal} ₺)\n(Örnek: 100 ₺ yerine 50 ₺ tahsil ettiyseniz 50 yazın. 0 yazarsanız borç silinir/kapanır):`,
@@ -2410,8 +2420,10 @@ window.promptEditPlateDebt = function(index) {
     plate.debtAmount = newAmount;
     if (newAmount <= 0) {
         plate.paid = true;
+        plate.settledByCreditor = true;
     } else {
         plate.paid = false;
+        plate.settledByCreditor = false;
     }
 
     audio.init();
@@ -2443,6 +2455,7 @@ window.settlePlateDebt = function(index) {
     if (!plate) return;
 
     plate.paid = true;
+    plate.settledByCreditor = true;
     plate.debtAmount = 0;
 
     audio.init();
@@ -2461,6 +2474,7 @@ window.unsettlePlateDebt = function(index) {
     const plate = state.plates[index];
     if (!plate) return;
     plate.paid = false;
+    plate.settledByCreditor = false;
     plate.debtAmount = null;
 
     renderPlatesUI();
@@ -2571,14 +2585,15 @@ function renderHistoryScreen() {
                 const items = p.items || [];
                 const personTotal = items.reduce((sum, it) => sum + (parseFloat(it.price) || 0), 0);
                 if (personTotal > 0) {
-                    const remainingAmount = (p.debtAmount !== null && p.debtAmount !== undefined) ? p.debtAmount : (p.paid ? 0 : personTotal);
+                    const isSettled = Boolean(p.paid && p.settledByCreditor);
+                    const remainingAmount = (p.debtAmount !== null && p.debtAmount !== undefined) ? p.debtAmount : (isSettled ? 0 : personTotal);
                     activeDebts.push({
                         plateIndex: idx,
                         debtor: p.person,
                         creditor: currentRunner,
                         totalAmount: personTotal,
                         remainingAmount: remainingAmount,
-                        paid: p.paid || (remainingAmount <= 0),
+                        paid: isSettled,
                         isCreditor: isCurrentRunnerCreditor
                     });
                 }
@@ -2609,7 +2624,7 @@ function renderHistoryScreen() {
                     </div>
                     <div>
                         ${d.paid ? 
-                            '<span class="debt-badge-pill debt-settled">✓ Tahsil Edildi (0 ₺)</span>' : 
+                            '<span class="debt-badge-pill debt-settled">✓ Tahsil Edildi</span>' : 
                             `<span class="debt-badge-pill debt-unpaid">${d.remainingAmount} ₺ Borç ${d.remainingAmount < d.totalAmount ? `<small style="opacity:0.8;">(Toplam: ${d.totalAmount} ₺)</small>` : ''}</span>`
                         }
                     </div>
@@ -2630,11 +2645,7 @@ function renderHistoryScreen() {
                             </button>
                         `}
                     </div>
-                ` : `
-                    <div class="small-text text-muted" style="font-size: 11px;">
-                        👁️ Görüntüleme Modu (Yalnızca alacaklı olan "${d.creditor}" alacağını silebilir veya değiştirebilir)
-                    </div>
-                `}
+                ` : ''}
             </div>
         `).join('');
     }
@@ -3460,6 +3471,7 @@ function mergeRemotePlates(remotePlates) {
             } else {
                 // Kendi tabağımız olsa bile, alacaklının yaptığı tahsilat/ödeme değişikliklerini almalıyız
                 state.plates[localIdx].paid = remotePlate.paid;
+                state.plates[localIdx].settledByCreditor = remotePlate.settledByCreditor;
                 state.plates[localIdx].debtAmount = remotePlate.debtAmount;
                 state.plates[localIdx].isRunner = remotePlate.isRunner;
             }
