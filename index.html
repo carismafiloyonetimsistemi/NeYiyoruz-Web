@@ -321,21 +321,12 @@
                 <div class="result-header text-center">
                     <span class="badge-green" id="resultHeaderBadge">🛒 SİPARİŞ & HESAP MASASI</span>
                     <h2 id="finalFoodTitle">Ortak Sipariş Masası</h2>
-                    <p>Herkes kendi tabağına dilediği yemek ve içecekleri eklesin:</p>
-                </div>
-
-                <!-- Sipariş Masası ve Siparişçi Bilgi Kartı -->
-                <div class="glass-card winner-spotlight">
-                    <div class="winner-img-box" id="winnerFoodEmoji">🍽️</div>
-                    <div class="winner-details">
-                        <div class="winner-title-row">
-                            <h3 id="winnerFoodName">Ortak Sipariş Masası</h3>
-                        </div>
-                        <p class="winner-tag" id="winnerDecisionTag">📋 Herkes Kendi Tabağını Belirliyor</p>
-                        <div class="runner-badge-pill">
-                            <i class="fa-solid fa-person-running"></i> Siparişi Veren & Ödeyen: <strong id="summaryRunnerName">-</strong>
-                        </div>
-                    </div>
+                    <p class="small-text text-muted mb-3" id="finalFoodSub">
+                        <span id="orderRoomInfoBadge" style="display:none; color: #fbbf24; font-weight: 600; margin-right: 6px;">
+                            <i class="fa-solid fa-door-open"></i> Oda: <span id="orderRoomNameDisplay"></span> •
+                        </span>
+                        <span>Herkes kendi tabağına dilediği lezzet ve içecekleri eklesin</span>
+                    </p>
                 </div>
 
                 <!-- BİREYSEL TABAKLAR & SEPET SİSTEMİ (Yeni Çözüm) -->
@@ -706,7 +697,7 @@
 
     <!-- Supabase JS Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=1792884638873"></script>
+    <script src="app.js?v=1792888048457"></script>
 
     <script>
       // Otomatik önbellek temizleme (PWA cache bust)

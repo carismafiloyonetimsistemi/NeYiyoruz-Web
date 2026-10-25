@@ -1984,20 +1984,28 @@ if (els.btnProceedToOrder) {
 // --- 11. BİREYSEL TABAKLAR & ADALETLİ HESAP BÖLÜŞÜMÜ (INDIVIDUAL PLATES & FAIR SPLIT) ---
 function renderResultScreen() {
     const runner = getEffectiveRunner();
-    const roomTitle = state.room?.title || 'Ortak Sipariş Masası';
+    const roomTitle = (state.room && state.room.title) ? state.room.title.trim() : '';
 
-    if (els.finalFoodTitle) els.finalFoodTitle.innerText = roomTitle;
-    if (els.winnerFoodEmoji) els.winnerFoodEmoji.innerText = '🍽️';
-    if (els.winnerFoodName) els.winnerFoodName.innerText = roomTitle;
-    if (els.winnerDecisionTag) {
-        els.winnerDecisionTag.innerText = '📋 Herkes Kendi Tabağını Belirliyor';
+    if (els.finalFoodTitle) {
+        els.finalFoodTitle.innerText = 'Ortak Sipariş Masası';
     }
 
-    if (els.summaryRunnerName) els.summaryRunnerName.innerText = runner;
+    const roomBadge = document.getElementById('orderRoomInfoBadge');
+    const roomDisplay = document.getElementById('orderRoomNameDisplay');
+    if (roomBadge && roomDisplay) {
+        if (roomTitle) {
+            roomDisplay.innerText = roomTitle;
+            roomBadge.style.display = 'inline';
+        } else {
+            roomBadge.style.display = 'none';
+        }
+    }
+
     if (els.cartRunnerDisplay) els.cartRunnerDisplay.innerText = runner;
 
     // Affiliate Linkleri (Genel Lezzet Arama)
-    const query = encodeURIComponent(roomTitle.replace(/[^a-zA-Z0-9ığüşöçİĞÜŞÖÇ ]/g, ''));
+    const searchQuery = (state.winnerFood && state.winnerFood.name) ? state.winnerFood.name : 'Yemek';
+    const query = encodeURIComponent(searchQuery.replace(/[^a-zA-Z0-9ığüşöçİĞÜŞÖÇ ]/g, ''));
     const affId = 'neyiyoruz_aff';
 
     if (els.linkYemeksepeti) els.linkYemeksepeti.href = `https://www.yemeksepeti.com/search?q=${query}&utm_source=affiliate&utm_medium=neyiyoruz&ref=${affId}`;
