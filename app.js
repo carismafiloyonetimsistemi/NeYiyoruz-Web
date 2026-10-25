@@ -811,6 +811,7 @@ function createRoom(title) {
     state.room = {
         code: code,
         title: roomTitle,
+        host: currentUserName, // Odayı kuran kişi host ve varsayılan alacaklıdır
         participants: participants,
         timerMinutes: roomMins,
         timerEndTime: timerEndTime
@@ -845,6 +846,7 @@ function joinRoom(code) {
     state.room = {
         code: code,
         title: state.room?.title || ('Lezzet Grubu #' + code),
+        host: state.room?.host || null,
         participants: participants,
     };
 
@@ -1807,14 +1809,22 @@ function selectRunnerDirectly(runnerPerson, shouldBroadcast = true) {
         els.volunteerSelect.value = runnerPerson;
     }
     // Tabaklardaki isRunner ve paid durumlarını da senkronize et
+    // Yeni seçilen runner = ALACAKLI (paid: true), diğer herkes borçludur (paid: false)
     if (state.plates && state.plates.length > 0) {
         state.plates.forEach(p => {
-            p.isRunner = (p.person.trim().toLowerCase() === runnerPerson.trim().toLowerCase());
-            if (p.isRunner) {
+            const isRunner = (p.person.trim().toLowerCase() === runnerPerson.trim().toLowerCase());
+            p.isRunner = isRunner;
+            if (isRunner) {
                 p.paid = true;
+                p.debtAmount = 0;
+            } else {
+                p.paid = false;
+                p.debtAmount = null;
             }
         });
         renderPlatesUI();
+        renderHistoryScreen();
+        broadcastPlatesChange();
     }
     if (shouldBroadcast) {
         broadcastRunnerChange(runnerPerson);
@@ -2005,7 +2015,8 @@ function setupPlatesData() {
                 state.plates.push({
                     person: person,
                     isRunner: isRunner,
-                    paid: isRunner,
+                    paid: isRunner, // Sadece runner true, yeni katılan herkes kesinlikle false (borçlu)!
+                    debtAmount: null,
                     items: []
                 });
             }
@@ -2015,8 +2026,10 @@ function setupPlatesData() {
         state.plates.forEach(p => {
             const isRunner = (p.person.trim().toLowerCase() === currentRunner.toLowerCase());
             p.isRunner = isRunner;
-            if (isRunner && !p.paid) {
+            if (isRunner) {
                 p.paid = true;
+            } else if (p.paid === undefined) {
+                p.paid = false;
             }
         });
         return;
@@ -2027,7 +2040,8 @@ function setupPlatesData() {
         return {
             person: person,
             isRunner: isRunner,
-            paid: isRunner,
+            paid: isRunner, // Odaya katılan herkes başlangıçta borçlu, sadece runner ödeyen!
+            debtAmount: null,
             items: []
         };
     });
@@ -2162,9 +2176,26 @@ function renderPlatesUI() {
                 </div>
 
                 <div class="plate-status-row">
-                    <button class="debt-status-btn ${plate.paid ? 'status-paid' : 'status-debt'}" onclick="togglePlatePaid(${index})">
-                        ${plate.paid ? (plate.isRunner ? '✓ Hesabı Ödeyen' : '✓ Ödedi') : (personTotal > 0 ? '❌ ' + currentRunner + '\'e Borçlu (' + personTotal + ' ₺)' : '⚪ Sipariş Bekleniyor')}
-                    </button>
+                    ${(() => {
+                        const isCreditor = Boolean(currentUserName && currentUserName.toLowerCase() === currentRunner.toLowerCase());
+                        const remaining = (plate.debtAmount !== null && plate.debtAmount !== undefined) ? plate.debtAmount : personTotal;
+                        const statusText = plate.paid ? 
+                            (plate.isRunner ? '👑 Siparişi Ödeyen' : '✓ Tahsil Edildi (Ödedi)') : 
+                            (personTotal > 0 ? '❌ ' + currentRunner + '\'e Borçlu (' + remaining + ' ₺)' : '⚪ Sipariş Bekleniyor');
+
+                        if (isCreditor) {
+                            return `<button type="button" class="debt-status-btn ${plate.paid ? 'status-paid' : 'status-debt'}" 
+                                            onclick="togglePlatePaid(${index})" 
+                                            title="Alacaklısınız: Ödeme durumunu değiştirmek için tıklayın">
+                                        ${statusText}
+                                    </button>`;
+                        } else {
+                            return `<div class="debt-status-badge ${plate.paid ? 'status-paid' : 'status-debt'}" 
+                                         title="Ödeme ve tahsilat durumunu yalnızca siparişçi (${currentRunner}) güncelleyebilir">
+                                        ${statusText}
+                                    </div>`;
+                        }
+                    })()}
                 </div>
             </div>
             `;
@@ -2317,10 +2348,125 @@ function updatePlatesTotalsOnly() {
 }
 
 window.togglePlatePaid = function(index) {
+    const currentUserName = (state.user && state.user.name && state.user.name.trim()) ? state.user.name.trim() : '';
+    const currentRunner = getEffectiveRunner();
+    const isCreditor = Boolean(currentUserName && currentUserName.toLowerCase() === currentRunner.toLowerCase());
+
+    // Yalnızca siparişçi/alacaklı ödeme durumunu değiştirebilir
+    if (!isCreditor) {
+        if (typeof window.showAppToast === 'function') {
+            window.showAppToast(`Ödeme ve tahsilat durumunu yalnızca siparişçi ve alacaklı olan "${currentRunner}" güncelleyebilir.`, 'warning');
+        }
+        return;
+    }
+
     if (state.plates[index]) {
         state.plates[index].paid = !state.plates[index].paid;
+        if (state.plates[index].paid) {
+            state.plates[index].debtAmount = 0;
+        } else {
+            state.plates[index].debtAmount = null; // Sıfırlayıp tam tutara döndür
+        }
+        audio.init();
+        audio.tick();
         renderPlatesUI();
+        renderHistoryScreen();
+        broadcastPlatesChange();
+        broadcastRoomState();
+        if (typeof window.showAppToast === 'function') {
+            const personName = state.plates[index].person;
+            window.showAppToast(state.plates[index].paid ? `✓ "${personName}" için ödeme tahsil edildi olarak işaretlendi.` : `❌ "${personName}" tekrar borçlu durumuna alındı.`, 'info');
+        }
     }
+};
+
+// ALACAKLININ BORÇ TUTARINI DEĞİŞTİRMESİ (Örn: 100 TL'den 50 TL tahsil etti)
+window.promptEditPlateDebt = function(index) {
+    const currentUserName = (state.user && state.user.name && state.user.name.trim()) ? state.user.name.trim() : '';
+    const currentRunner = getEffectiveRunner();
+    const isCreditor = Boolean(currentUserName && currentUserName.toLowerCase() === currentRunner.toLowerCase());
+
+    if (!isCreditor) {
+        if (typeof window.showAppToast === 'function') {
+            window.showAppToast(`Yalnızca alacaklı olan "${currentRunner}" borç tutarını düzenleyebilir.`, 'warning');
+        }
+        return;
+    }
+
+    const plate = state.plates[index];
+    if (!plate) return;
+
+    const personTotal = (plate.items || []).reduce((sum, it) => sum + (parseFloat(it.price) || 0), 0);
+    const currentRemaining = (plate.debtAmount !== null && plate.debtAmount !== undefined) ? plate.debtAmount : (plate.paid ? 0 : personTotal);
+
+    const input = prompt(
+        `"${plate.person}" adlı kişiden kalan alacak tutarını girin (₺):\n\n(Toplam Hesap: ${personTotal} ₺)\n(Örnek: 100 ₺ yerine 50 ₺ tahsil ettiyseniz 50 yazın. 0 yazarsanız borç silinir/kapanır):`,
+        String(currentRemaining)
+    );
+
+    if (input === null) return;
+
+    const newAmount = Math.max(0, parseFloat(input.trim()) || 0);
+    plate.debtAmount = newAmount;
+    if (newAmount <= 0) {
+        plate.paid = true;
+    } else {
+        plate.paid = false;
+    }
+
+    audio.init();
+    audio.tick();
+    renderPlatesUI();
+    renderHistoryScreen();
+    broadcastPlatesChange();
+    broadcastRoomState();
+
+    if (typeof window.showAppToast === 'function') {
+        window.showAppToast(`"${plate.person}" için kalan borç ${newAmount} ₺ olarak güncellendi.`, 'success');
+    }
+};
+
+// ALACAKLININ BORCU SİLMESİ / TAMAMEN TAHSİL ETMESİ
+window.settlePlateDebt = function(index) {
+    const currentUserName = (state.user && state.user.name && state.user.name.trim()) ? state.user.name.trim() : '';
+    const currentRunner = getEffectiveRunner();
+    const isCreditor = Boolean(currentUserName && currentUserName.toLowerCase() === currentRunner.toLowerCase());
+
+    if (!isCreditor) {
+        if (typeof window.showAppToast === 'function') {
+            window.showAppToast(`Yalnızca alacaklı olan "${currentRunner}" borcu silebilir.`, 'warning');
+        }
+        return;
+    }
+
+    const plate = state.plates[index];
+    if (!plate) return;
+
+    plate.paid = true;
+    plate.debtAmount = 0;
+
+    audio.init();
+    audio.fanfare();
+    renderPlatesUI();
+    renderHistoryScreen();
+    broadcastPlatesChange();
+    broadcastRoomState();
+
+    if (typeof window.showAppToast === 'function') {
+        window.showAppToast(`✓ "${plate.person}" adlı kişinin borcu tahsil edildi ve silindi!`, 'success');
+    }
+};
+
+window.unsettlePlateDebt = function(index) {
+    const plate = state.plates[index];
+    if (!plate) return;
+    plate.paid = false;
+    plate.debtAmount = null;
+
+    renderPlatesUI();
+    renderHistoryScreen();
+    broadcastPlatesChange();
+    broadcastRoomState();
 };
 
 // --- SIPARIS LISTESI & NOTUNU KOPYALA ---
@@ -2412,55 +2558,131 @@ els.btnSaveDebtSummary.addEventListener('click', () => {
 
 // --- 12. HISTORY & DEBT SCREEN RENDERING ---
 function renderHistoryScreen() {
-    // 1. Calculate Active Debts based on individual plates
-    const unpaidMap = {}; // { 'Ersoy': { to: 'Ahmet', amount: 340 } }
+    const currentUserName = (state.user && state.user.name && state.user.name.trim()) ? state.user.name.trim() : '';
+    const currentRunner = getEffectiveRunner();
+    const isCurrentRunnerCreditor = Boolean(currentUserName && currentUserName.toLowerCase() === currentRunner.toLowerCase());
 
-    state.debtsHistory.forEach(record => {
-        const orderRunner = record.runner || 'Siparişçi';
-        (record.plates || []).forEach(p => {
-            if (!p.paid && !p.isRunner && p.person.trim().toLowerCase() !== orderRunner.trim().toLowerCase()) {
-                const key = `${p.person} ➔ ${orderRunner}`;
-                if (!unpaidMap[key]) unpaidMap[key] = 0;
-                unpaidMap[key] += (parseFloat(p.price) || 0);
+    // 1. CANLI SİPARİŞ MASASININ BORÇLARI (Otomatik Aktif Borç İlişkisi)
+    const activeDebts = [];
+    if (state.plates && state.plates.length > 0) {
+        state.plates.forEach((p, idx) => {
+            const isRunner = (p.person.trim().toLowerCase() === currentRunner.toLowerCase());
+            if (!isRunner) {
+                const items = p.items || [];
+                const personTotal = items.reduce((sum, it) => sum + (parseFloat(it.price) || 0), 0);
+                if (personTotal > 0) {
+                    const remainingAmount = (p.debtAmount !== null && p.debtAmount !== undefined) ? p.debtAmount : (p.paid ? 0 : personTotal);
+                    activeDebts.push({
+                        plateIndex: idx,
+                        debtor: p.person,
+                        creditor: currentRunner,
+                        totalAmount: personTotal,
+                        remainingAmount: remainingAmount,
+                        paid: p.paid || (remainingAmount <= 0),
+                        isCreditor: isCurrentRunnerCreditor
+                    });
+                }
             }
         });
-    });
+    }
 
-    const debtEntries = Object.entries(unpaidMap);
-    if (debtEntries.length === 0) {
+    if (!els.activeDebtSummaryBox) return;
+
+    if (activeDebts.length === 0) {
         els.activeDebtSummaryBox.innerHTML = `
-            <div class="small-text text-center py-2" style="color:#34d399;">
-                🎉 Harika! Kimsenin borcu bulunmuyor, tüm hesaplar kapalı.
+            <div class="small-text text-center py-3" style="color:#94a3b8;">
+                🎉 Aktif masada bekleyen borç bulunmuyor. Herkes ödemesini yaptı veya henüz yemek seçimi yapılmadı.
             </div>
         `;
     } else {
-        els.activeDebtSummaryBox.innerHTML = debtEntries.map(([debtPair, amount]) => `
-            <div class="debt-summary-item">
-                <span><strong>${debtPair}</strong></span>
-                <span class="debt-badge-red">${amount} ₺ Borç</span>
+        els.activeDebtSummaryBox.innerHTML = activeDebts.map(d => `
+            <div class="debt-card-box">
+                <div class="debt-card-header">
+                    <div>
+                        <strong style="color: #f8fafc; font-size: 14px;">
+                            <i class="fa-solid fa-user text-orange"></i> ${d.debtor}
+                        </strong>
+                        <span style="color: #94a3b8; font-size: 12px; margin: 0 4px;">➔</span>
+                        <strong style="color: #fbbf24; font-size: 13px;">
+                            <i class="fa-solid fa-crown"></i> ${d.creditor} (Alacaklı)
+                        </strong>
+                    </div>
+                    <div>
+                        ${d.paid ? 
+                            '<span class="debt-badge-pill debt-settled">✓ Tahsil Edildi (0 ₺)</span>' : 
+                            `<span class="debt-badge-pill debt-unpaid">${d.remainingAmount} ₺ Borç ${d.remainingAmount < d.totalAmount ? `<small style="opacity:0.8;">(Toplam: ${d.totalAmount} ₺)</small>` : ''}</span>`
+                        }
+                    </div>
+                </div>
+
+                ${d.isCreditor ? `
+                    <div class="debt-actions-row">
+                        ${!d.paid ? `
+                            <button type="button" class="btn btn-xs btn-primary" onclick="settlePlateDebt(${d.plateIndex})" title="Borcu tahsil et ve kapat">
+                                <i class="fa-solid fa-check"></i> Tahsil Edildi (Borcu Kapat)
+                            </button>
+                            <button type="button" class="btn btn-xs btn-outline" onclick="promptEditPlateDebt(${d.plateIndex})" title="Kısmi tahsilat veya kalan tutarı düzenle">
+                                <i class="fa-solid fa-pen-to-square"></i> Tutar Düzenle
+                            </button>
+                        ` : `
+                            <button type="button" class="btn btn-xs btn-ghost text-muted" onclick="unsettlePlateDebt(${d.plateIndex})" title="Tekrar borçlu durumuna getir">
+                                <i class="fa-solid fa-rotate-left"></i> Tekrar Borçlu Yap
+                            </button>
+                        `}
+                    </div>
+                ` : `
+                    <div class="small-text text-muted" style="font-size: 11px;">
+                        👁️ Görüntüleme Modu (Yalnızca alacaklı olan "${d.creditor}" alacağını silebilir veya değiştirebilir)
+                    </div>
+                `}
             </div>
         `).join('');
     }
 
-    // 2. Voting & Session History with Plate Breakdown
+    // 2. GEÇMİŞ SİPARİŞLER (Arşiv Kayıtları)
+    if (!els.votingHistoryList) return;
+
     if (state.debtsHistory.length === 0) {
         els.votingHistoryList.innerHTML = `
-            <div class="small-text text-center py-2">Henüz kaydedilmiş bir sipariş geçmişi yok.</div>
+            <div class="small-text text-center py-2" style="color: #94a3b8;">Henüz kaydedilmiş bir sipariş geçmişi yok.</div>
         `;
     } else {
-        els.votingHistoryList.innerHTML = state.debtsHistory.map(h => `
+        els.votingHistoryList.innerHTML = state.debtsHistory.map((h, histIdx) => {
+            const isHistCreditor = Boolean(currentUserName && currentUserName.toLowerCase() === (h.runner || '').toLowerCase());
+            return `
             <div class="history-item">
-                <div class="history-left">
-                    <strong>${h.cuisine} (${h.total} ₺)</strong>
-                    <span>Tarih: ${h.date} • Siparişçi: ${h.runner}</span>
+                <div class="history-left flex-between">
+                    <div>
+                        <strong>${h.cuisine || 'Yemek Siparişi'} (${h.total} ₺)</strong>
+                        <span>Tarih: ${h.date} • Siparişçi / Alacaklı: <strong style="color:#fbbf24;">${h.runner}</strong></span>
+                    </div>
+                    ${isHistCreditor ? `
+                        <button type="button" class="btn-xs btn-ghost text-danger" onclick="deleteHistoryRecord(${histIdx})" title="Bu sipariş kaydını sil">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    ` : ''}
                 </div>
-                <div class="history-breakdown">
-                    ${h.plates.map(p => `• ${p.person}: ${p.dish} (${p.price} ₺) [${p.paid ? 'Ödedi' : 'Borçlu'}]`).join('<br>')}
+                <div class="history-breakdown mt-2">
+                    ${(h.plates || []).map(p => `
+                        <div class="flex-between py-1" style="border-bottom: 1px dashed rgba(255,255,255,0.06);">
+                            <span>• ${p.person}: ${p.dish || 'Sipariş'} (${p.price} ₺)</span>
+                            <span style="font-weight:700; color: ${p.paid ? '#34d399' : '#f87171'};">${p.paid ? '✓ Ödedi' : '❌ Borçlu'}</span>
+                        </div>
+                    `).join('')}
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
     }
 }
+
+window.deleteHistoryRecord = function(histIdx) {
+    if (!confirm('Bu sipariş kaydını geçmişten silmek istediğinize emin misiniz?')) return;
+    state.debtsHistory.splice(histIdx, 1);
+    localStorage.setItem('neyiyoruz_debts_history', JSON.stringify(state.debtsHistory));
+    renderHistoryScreen();
+    broadcastRoomState();
+};
 
 // --- 13. PROMO & INIT ---
 els.btnCopyPromo.addEventListener('click', () => {
@@ -3126,6 +3348,10 @@ function initRoomRealtime(roomCode) {
                 state.room.title = payload.title;
             }
 
+            if (payload.host && state.room) {
+                state.room.host = payload.host;
+            }
+
             if (payload.participants && Array.isArray(payload.participants)) {
                 payload.participants.forEach(p => {
                     if (!state.room.participants.includes(p)) {
@@ -3149,6 +3375,11 @@ function initRoomRealtime(roomCode) {
                 renderWheelParticipants();
             }
 
+            if (payload.debtsHistory && Array.isArray(payload.debtsHistory)) {
+                state.debtsHistory = payload.debtsHistory;
+                localStorage.setItem('neyiyoruz_debts_history', JSON.stringify(state.debtsHistory));
+            }
+
             if (payload.timerEndTime && (!state.room.timerEndTime || payload.timerEndTime > state.room.timerEndTime)) {
                 state.room.timerEndTime = payload.timerEndTime;
                 state.room.timerMinutes = payload.timerMinutes !== undefined ? payload.timerMinutes : Math.round((payload.timerEndTime - Date.now()) / 60000);
@@ -3163,6 +3394,7 @@ function initRoomRealtime(roomCode) {
             if (platesChanged) {
                 renderPlatesUI();
             }
+            renderHistoryScreen();
         })
         .on('broadcast', { event: 'runner_selected' }, ({ payload }) => {
             console.log('[Broadcast] Received runner_selected:', payload);
@@ -3181,9 +3413,10 @@ function initRoomRealtime(roomCode) {
             if (payload && Array.isArray(payload.plates)) {
                 mergeRemotePlates(payload.plates);
                 renderPlatesUI();
+                renderHistoryScreen();
                 populateVolunteerSelect();
                 drawWheel();
-                showGlobalToast(`🛒 Siparişler güncellendi!`);
+                showGlobalToast(`🛒 Siparişler ve borçlar güncellendi!`);
             }
         })
         .subscribe(async (status) => {
@@ -3200,7 +3433,10 @@ function initRoomRealtime(roomCode) {
                     payload: { from: currentUserName }
                 });
 
-                broadcastRoomState();
+                // Yalnızca odanın kurucusu/host ise yayınlasın, newcomer boş state ile ezmesin
+                if (state.room && state.room.host && state.room.host === currentUserName) {
+                    broadcastRoomState();
+                }
             }
         });
 }
@@ -3218,8 +3454,14 @@ function mergeRemotePlates(remotePlates) {
     remotePlates.forEach(remotePlate => {
         const localIdx = state.plates.findIndex(p => p.person.toLowerCase() === remotePlate.person.toLowerCase());
         if (localIdx >= 0) {
+            // Başkalarının tabağını tamamen güncelle
             if (remotePlate.person.toLowerCase() !== currentUserName.toLowerCase()) {
                 state.plates[localIdx] = remotePlate;
+            } else {
+                // Kendi tabağımız olsa bile, alacaklının yaptığı tahsilat/ödeme değişikliklerini almalıyız
+                state.plates[localIdx].paid = remotePlate.paid;
+                state.plates[localIdx].debtAmount = remotePlate.debtAmount;
+                state.plates[localIdx].isRunner = remotePlate.isRunner;
             }
         } else {
             state.plates.push(remotePlate);
@@ -3255,10 +3497,12 @@ function broadcastRoomState() {
             payload: {
                 title: state.room.title,
                 code: state.room.code,
+                host: state.room.host,
                 participants: state.room.participants,
                 plates: state.plates,
                 winnerFood: state.winnerFood,
                 runner: state.runner,
+                debtsHistory: state.debtsHistory,
                 timerEndTime: state.room.timerEndTime,
                 timerMinutes: state.room.timerMinutes
             }
