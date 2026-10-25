@@ -1292,48 +1292,54 @@ function renderMenuScreen() {
                 const inPlateQty = plateItem ? (plateItem.qty || 1) : 0;
 
                 return `
-                <div class="menu-catalog-card">
-                    <div class="catalog-card-left">
+                <div class="menu-catalog-card ${inPlateQty > 0 ? 'in-plate' : ''}">
+                    <!-- Üst Bölüm: Emoji, Yemek Adı & Açıklaması, Sağ Üst Hızlı Butonlar -->
+                    <div class="catalog-card-top">
                         <div class="catalog-card-emoji">${item.emoji}</div>
                         <div class="catalog-card-details">
-                            <div class="catalog-card-title-row">
-                                <h4 class="catalog-card-title">${item.name}</h4>
-                                <div style="display:flex; align-items:center; gap:6px;">
-                                    <button type="button" class="btn-fav-star ${isFav ? 'active' : ''}" 
-                                            onclick="toggleFavoriteFood('${item.id}', event)" 
-                                            title="${isFav ? 'Favorilerden Çıkar' : 'Favorilere Ekle (Sepette Hızlı Ekle)'}">
-                                        <i class="${isFav ? 'fa-solid fa-star' : 'fa-regular fa-star'}"></i>
-                                    </button>
-                                    <button type="button" class="btn-delete-catalog-food" 
-                                            onclick="deleteCatalogFoodItem('${item.id}', event)" 
-                                            title="Bu yemeği menüden tamamen sil">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <span class="catalog-card-desc">${item.desc}</span>
+                            <h4 class="catalog-card-title">${item.name}</h4>
+                            ${item.desc ? `<p class="catalog-card-desc">${item.desc}</p>` : ''}
+                        </div>
+                        <div class="catalog-card-quick-actions">
+                            <button type="button" class="btn-fav-star ${isFav ? 'active' : ''}" 
+                                    onclick="toggleFavoriteFood('${item.id}', event)" 
+                                    title="${isFav ? 'Favorilerden Çıkar' : 'Favorilere Ekle'}">
+                                <i class="${isFav ? 'fa-solid fa-star' : 'fa-regular fa-star'}"></i>
+                            </button>
+                            <button type="button" class="btn-delete-catalog-food" 
+                                    onclick="deleteCatalogFoodItem('${item.id}', event)" 
+                                    title="Bu yemeği menüden tamamen sil">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Alt Bölüm: Net Fiyat & Ekleme Butonları -->
+                    <div class="catalog-card-bottom">
+                        <div class="catalog-card-price-col">
                             <div class="catalog-card-price">${item.price} ₺</div>
                             ${inPlateQty > 0 ? `
-                                <div class="catalog-plate-status">
-                                    <span class="catalog-in-plate-badge">✓ Tabağınızda: ${inPlateQty} adet</span>
-                                    <button type="button" class="btn-remove-from-plate" 
-                                            onclick="removeItemFromPlateByName('${item.name.replace(/'/g, "\'")}', ${targetIdx})" 
-                                            title="Bu yemeği tabağımdan çıkar">
-                                        <i class="fa-solid fa-trash-can"></i> Çıkar
+                                <div class="catalog-in-plate-indicator">
+                                    <span class="catalog-in-plate-badge"><i class="fa-solid fa-check"></i> Tabağınızda: ${inPlateQty}</span>
+                                    <button type="button" class="btn-remove-from-plate-mini" 
+                                            onclick="removeItemFromPlateByName('${item.name.replace(/'/g, "\\'")}', ${targetIdx})" 
+                                            title="Tabağımdan Çıkar">
+                                        <i class="fa-solid fa-trash-can"></i>
                                     </button>
                                 </div>
                             ` : ''}
                         </div>
-                    </div>
-                    <div class="catalog-card-actions">
-                        <div class="catalog-qty-stepper">
-                            <button type="button" class="btn-catalog-qty" onclick="changeCatalogItemQty('${item.id}', -1)">-</button>
-                            <span class="catalog-qty-val" id="catalogQty_${item.id}">${qty}</span>
-                            <button type="button" class="btn-catalog-qty" onclick="changeCatalogItemQty('${item.id}', 1)">+</button>
+
+                        <div class="catalog-card-actions">
+                            <div class="catalog-qty-stepper">
+                                <button type="button" class="btn-catalog-qty" onclick="changeCatalogItemQty('${item.id}', -1)" aria-label="Porsiyon Azalt">-</button>
+                                <span class="catalog-qty-val" id="catalogQty_${item.id}">${qty}</span>
+                                <button type="button" class="btn-catalog-qty" onclick="changeCatalogItemQty('${item.id}', 1)" aria-label="Porsiyon Arttır">+</button>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary btn-catalog-add" onclick="addCatalogItemToTargetPlate('${item.id}')">
+                                <i class="fa-solid fa-plus"></i> Ekle
+                            </button>
                         </div>
-                        <button type="button" class="btn btn-sm btn-primary btn-catalog-add" onclick="addCatalogItemToTargetPlate('${item.id}')">
-                            <i class="fa-solid fa-plus"></i> Ekle
-                        </button>
                     </div>
                 </div>
                 `;

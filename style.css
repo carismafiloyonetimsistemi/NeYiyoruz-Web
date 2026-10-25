@@ -1987,67 +1987,145 @@ body {
 }
 
 .menu-catalog-card {
-    background: rgba(30, 41, 59, 0.65);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 14px;
-    padding: 12px 14px;
+    background: rgba(30, 41, 59, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 16px;
+    padding: 14px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    backdrop-filter: blur(8px);
+    flex-direction: column;
+    gap: 10px;
+    backdrop-filter: blur(10px);
     transition: all 0.2s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 .menu-catalog-card:hover {
-    border-color: rgba(249, 115, 22, 0.35);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    border-color: rgba(249, 115, 22, 0.45);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+.menu-catalog-card.in-plate {
+    border-color: rgba(52, 211, 153, 0.4);
+    background: rgba(16, 185, 129, 0.05);
 }
 
-.catalog-card-left {
+/* Üst Kısım: Emoji + Detaylar + Sağ Üstte Butonlar */
+.catalog-card-top {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
-    flex: 1;
-    min-width: 0;
+    width: 100%;
 }
+
 .catalog-card-emoji {
-    font-size: 32px;
+    font-size: 30px;
     width: 48px;
     height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+    border-radius: 13px;
     flex-shrink: 0;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
+
 .catalog-card-details {
     flex: 1;
     min-width: 0;
 }
+
 .catalog-card-title {
-    margin: 0 0 2px;
+    margin: 0 0 3px 0;
     font-size: 15px;
     font-weight: 700;
     color: #f8fafc;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.35;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
+
 .catalog-card-desc {
-    display: block;
-    font-size: 11px;
-    color: #94a3b8;
-    margin-bottom: 4px;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    font-size: 11px;
+    line-height: 1.45;
+    color: #94a3b8;
+    margin: 0;
 }
+
+.catalog-card-quick-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* Alt Kısım: Fiyat & Ekleme Butonları (Tam Genişlik) */
+.catalog-card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    margin-top: 2px;
+}
+
+.catalog-card-price-col {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
 .catalog-card-price {
-    font-size: 14px;
+    font-size: 17px;
     font-weight: 800;
     color: #fbbf24;
+    letter-spacing: -0.3px;
+    line-height: 1.1;
+}
+
+.catalog-in-plate-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.catalog-in-plate-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(52, 211, 153, 0.3);
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+
+.btn-remove-from-plate-mini {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #f87171;
+    font-size: 10px;
+    padding: 2px 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.15s;
+}
+.btn-remove-from-plate-mini:hover {
+    background: rgba(239, 68, 68, 0.3);
+    color: #ffffff;
 }
 
 .catalog-card-actions {
